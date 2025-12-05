@@ -6,14 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg: #020617;
-      --card: #020617;
-      --accent: #22c55e;
-      --accent-soft: rgba(34,197,94,0.12);
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --border: #1f2937;
-      --danger: #ef4444;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --accent: #16a34a;
+      --accent-2: #dc2626;
+      --accent-soft: rgba(22,163,74,0.12);
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #dc2626;
     }
 
     * {
@@ -24,151 +25,183 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: radial-gradient(circle at top, #1f2937 0, #020617 60%);
-      color: var(--text);
+      background: radial-gradient(circle at top, #e5e7eb 0, #d1d5db 35%, #9ca3af 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 12px;
+      color: var(--text);
     }
 
     .wrapper {
       width: 100%;
-      max-width: 900px;
+      max-width: 420px;
     }
 
     .card {
       background: var(--card);
       border-radius: 18px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      padding: 18px 16px 16px;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.18);
+      overflow: hidden;
+    }
+
+    /* Barra tipo bandera arriba */
+    .flag-bar {
+      display: flex;
+      height: 4px;
+      width: 100%;
+    }
+    .flag-bar > div:nth-child(1) { flex: 1; background: #16a34a; }
+    .flag-bar > div:nth-child(2) { flex: 1; background: #f9fafb; }
+    .flag-bar > div:nth-child(3) { flex: 1; background: #dc2626; }
+
+    .card-inner {
+      padding: 14px 14px 12px;
     }
 
     .header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .subtitle {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .badge {
-      align-self: flex-start;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .cierre {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    .inputs-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 8px;
+      text-align: center;
       margin-bottom: 10px;
     }
 
-    label span {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-bottom: 2px;
-      display: inline-block;
+    .title-main {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .title-main span:nth-child(1) { color: #16a34a; }
+    .title-main span:nth-child(2) { color: #dc2626; }
+
+    .subtitle {
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 2px;
     }
 
-    input[type="text"], input[type="tel"] {
-      width: 100%;
-      padding: 7px 9px;
-      border-radius: 10px;
+    .info-line {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+
+    .inputs {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group {
+      border-radius: 12px;
       border: 1px solid var(--border);
-      background: #020617;
-      color: var(--text);
+      background: #f9fafb;
+      padding: 6px 10px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .input-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    input[type="tel"],
+    input[type="text"] {
+      border: none;
+      background: transparent;
       font-size: 0.85rem;
+      padding: 0;
+      outline: none;
+      color: var(--text);
     }
 
     input::placeholder {
-      color: #6b7280;
+      color: #9ca3af;
     }
 
     .table-wrapper {
+      margin-top: 10px;
       border-radius: 14px;
       border: 1px solid var(--border);
-      background: #020617;
-      max-height: 420px;
-      overflow: hidden;
+      background: #f9fafb;
+      max-height: 440px;
       overflow-y: auto;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
     }
 
     th, td {
-      padding: 8px 9px;
-      border-bottom: 1px solid #111827;
-      text-align: left;
+      padding: 8px 6px;
     }
 
     th {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
-      background: #020617;
+      border-bottom: 1px solid var(--border);
+      background: #f3f4f6;
       position: sticky;
       top: 0;
       z-index: 1;
     }
 
-    tbody tr:nth-child(even) {
-      background: rgba(15, 23, 42, 0.9);
-    }
-
-    tbody tr:hover {
-      background: rgba(37, 99, 235, 0.25);
+    tbody tr + tr {
+      border-top: 1px solid #e5e7eb;
     }
 
     .col-num {
-      width: 32px;
+      width: 22px;
       text-align: center;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .col-team {
+      width: 95px;
+    }
+
+    .col-team .team {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .team-logo {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+
+    .team-name {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #111827;
     }
 
     .col-pron {
-      width: 155px;
+      width: 34px;
       text-align: center;
-      white-space: nowrap;
-    }
-
-    .pronosticos {
-      display: inline-flex;
-      gap: 6px;
-      align-items: center;
-      justify-content: center;
     }
 
     .pill-radio {
       position: relative;
+      display: inline-block;
     }
 
     .pill-radio input {
@@ -181,85 +214,80 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
+      width: 30px;
+      height: 26px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
       font-size: 0.7rem;
+      font-weight: 700;
+      color: #4b5563;
       cursor: pointer;
-      user-select: none;
-      background: rgba(15, 23, 42, 0.95);
-      color: var(--muted);
-      transition: all 0.15s ease;
+      transition: all 0.12s ease;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.01);
     }
 
     .pill-radio input:checked + span {
       border-color: var(--accent);
       background: var(--accent-soft);
-      color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
-    }
-
-    .pill-radio span small {
-      opacity: 0.9;
-      margin-left: 3px;
+      color: #15803d;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.35);
     }
 
     .footer {
+      margin-top: 10px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
       align-items: center;
       justify-content: space-between;
-      margin-top: 12px;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .status {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--muted);
     }
-
     .status.error {
       color: var(--danger);
     }
-
     .status.success {
       color: var(--accent);
     }
 
     .actions {
       display: flex;
-      gap: 8px;
-      align-items: center;
+      gap: 6px;
     }
 
     button {
-      border: none;
       border-radius: 999px;
-      padding: 8px 18px;
-      font-size: 0.8rem;
+      border: none;
+      padding: 7px 14px;
+      font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      white-space: nowrap;
     }
 
     .btn-primary {
-      background: var(--accent);
-      color: #022c22;
-      box-shadow: 0 12px 30px rgba(34, 197, 94, 0.4);
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: #ecfdf3;
+      box-shadow: 0 10px 20px rgba(22, 163, 74, 0.35);
     }
 
     .btn-primary:active {
       transform: translateY(1px) scale(0.99);
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+      box-shadow: 0 4px 10px rgba(22, 163, 74, 0.35);
     }
 
     .btn-ghost {
-      background: transparent;
-      color: var(--muted);
-      border: 1px solid var(--border);
+      background: #f3f4f6;
+      color: #4b5563;
+      border: 1px solid #e5e7eb;
     }
 
     .btn-ghost:active {
@@ -267,27 +295,25 @@
     }
 
     .btn-primary[disabled] {
-      opacity: 0.6;
-      cursor: default;
+      opacity: 0.7;
       box-shadow: none;
+      cursor: default;
       transform: none;
     }
 
-    @media (max-width: 640px) {
-      .card {
-        padding: 14px 12px;
+    @media (max-width: 480px) {
+      .wrapper {
+        max-width: 380px;
       }
-      .title {
-        font-size: 1.05rem;
+      .card-inner {
+        padding: 12px 10px 10px;
       }
-      .inputs-row {
-        grid-template-columns: 1fr;
+      .team-name {
+        font-size: 0.68rem;
       }
-      th, td {
-        padding: 7px 7px;
-      }
-      .col-pron {
-        width: 140px;
+      .pill-radio span {
+        width: 28px;
+        height: 24px;
       }
     }
   </style>
@@ -295,69 +321,65 @@
 <body>
   <div class="wrapper">
     <div class="card">
-      <div class="header">
-        <div>
-          <div id="titulo" class="title">QUINIELA LOS MISMOS</div>
+      <div class="flag-bar">
+        <div></div><div></div><div></div>
+      </div>
+      <div class="card-inner">
+        <div class="header">
+          <div class="title-main">
+            <span>QUINIELA</span> <span>LOS MISMOS</span>
+          </div>
           <div id="subtitulo" class="subtitle">Jornada</div>
+          <div id="info-cierre" class="info-line"></div>
         </div>
-        <div class="badge">
-          Cupón simple • 1 pronóstico por partido
+
+        <div class="inputs">
+          <div class="input-group">
+            <div class="input-label">Teléfono (WhatsApp) *</div>
+            <input id="input-telefono" type="tel" placeholder="10 dígitos o con lada" />
+          </div>
+          <div class="input-group">
+            <div class="input-label">Nombre (opcional)</div>
+            <input id="input-nombre" type="text" placeholder="Tu nombre" />
+          </div>
         </div>
-      </div>
 
-      <div id="cierre" class="cierre"></div>
-
-      <div class="inputs-row">
-        <label>
-          <span>Nombre (opcional)</span>
-          <input id="input-nombre" type="text" placeholder="Tu nombre" />
-        </label>
-        <label>
-          <span>Teléfono (WhatsApp) *</span>
-          <input id="input-telefono" type="tel" placeholder="10 dígitos o con lada" />
-        </label>
-      </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th class="col-num">#</th>
-              <th id="th-local">Local</th>
-              <th id="th-visita">Visitante</th>
-              <th class="col-pron">Pronóstico</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-partidos">
-            <!-- Se llena por JS -->
-          </tbody>
-        </table>
-      </div>
-
-      <div class="footer">
-        <div id="status" class="status">
-          Cargando quiniela...
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-pron">L</th>
+                <th class="col-team" id="th-local">Local</th>
+                <th class="col-pron">E</th>
+                <th class="col-team" id="th-visita">Visitante</th>
+                <th class="col-pron">V</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-partidos">
+              <!-- Se llena por JS -->
+            </tbody>
+          </table>
         </div>
-        <div class="actions">
-          <button type="button" class="btn-ghost" id="btn-limpiar">Limpiar</button>
-          <button type="button" class="btn-primary" id="btn-enviar">
-            Enviar quiniela
-          </button>
+
+        <div class="footer">
+          <div id="status" class="status">Cargando quiniela...</div>
+          <div class="actions">
+            <button type="button" class="btn-ghost" id="btn-limpiar">Limpiar</button>
+            <button type="button" class="btn-primary" id="btn-enviar">Enviar</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // URL del Web App de Apps Script
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
 
-    const tituloEl = document.getElementById('titulo');
     const subtituloEl = document.getElementById('subtitulo');
-    const cierreEl = document.getElementById('cierre');
+    const infoCierreEl = document.getElementById('info-cierre');
     const thLocal = document.getElementById('th-local');
     const thVisita = document.getElementById('th-visita');
-
     const tbody = document.getElementById('tbody-partidos');
     const statusEl = document.getElementById('status');
     const btnEnviar = document.getElementById('btn-enviar');
@@ -367,27 +389,39 @@
 
     let partidosGlobal = [];
 
+    // Convierte el nombre del equipo en nombre de archivo: "CRUZ AZUL" -> "cruz-azul.png"
+    function getLogoUrl(nombre) {
+      if (!nombre) return "";
+      let slug = nombre
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita acentos
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, "") // quita símbolos raros
+        .trim()
+        .replace(/\s+/g, "-");
+      return "assets/" + slug + ".png";
+    }
+
     async function cargarConfig() {
       try {
-        statusEl.textContent = 'Cargando quiniela...';
-        statusEl.className = 'status';
+        statusEl.textContent = "Cargando quiniela...";
+        statusEl.className = "status";
 
-        const res = await fetch(SCRIPT_URL + '?action=getConfig', {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
+        const res = await fetch(SCRIPT_URL + "?action=getConfig", {
+          method: "GET",
+          headers: { Accept: "application/json" }
         });
 
         const data = await res.json();
-
         if (!data.ok) {
-          throw new Error(data.message || 'No se pudo obtener la configuración');
+          throw new Error(data.message || "No se pudo obtener la configuración");
         }
 
-        // Encabezados desde CONFIG
-        if (data.titulo) tituloEl.textContent = data.titulo;
         if (data.subtitulo) subtituloEl.textContent = data.subtitulo;
-        if (data.cierre) cierreEl.textContent = 'Cierre: ' + data.cierre;
-        else cierreEl.textContent = '';
+        if (data.cierre) {
+          infoCierreEl.textContent = "Cierre: " + data.cierre;
+        } else {
+          infoCierreEl.textContent = "";
+        }
 
         if (data.labelLocal) thLocal.textContent = data.labelLocal;
         if (data.labelVisitante) thVisita.textContent = data.labelVisitante;
@@ -396,45 +430,64 @@
         renderPartidos(partidosGlobal);
 
         if (partidosGlobal.length === 0) {
-          statusEl.textContent = 'No hay partidos configurados en la hoja CONFIG.';
+          statusEl.textContent = "No hay partidos configurados en la hoja CONFIG.";
         } else {
-          statusEl.textContent = 'Selecciona un pronóstico por partido y envía tu quiniela.';
+          statusEl.textContent = "Selecciona un pronóstico por partido y envía tu quiniela.";
         }
-
       } catch (err) {
         console.error(err);
-        statusEl.textContent = 'Error al cargar la quiniela.';
-        statusEl.className = 'status error';
+        statusEl.textContent = "Error al cargar la quiniela.";
+        statusEl.className = "status error";
       }
     }
 
     function renderPartidos(partidos) {
-      tbody.innerHTML = '';
+      tbody.innerHTML = "";
 
-      partidos.forEach(p => {
-        const tr = document.createElement('tr');
+      partidos.forEach((p, index) => {
+        const tr = document.createElement("tr");
         tr.dataset.local = p.local;
         tr.dataset.visita = p.visita;
 
+        const localLogo = getLogoUrl(p.local);
+        const visitaLogo = getLogoUrl(p.visita);
+
         tr.innerHTML = `
           <td class="col-num">${p.numero}</td>
-          <td>${p.local || ''}</td>
-          <td>${p.visita || ''}</td>
+
           <td class="col-pron">
-            <div class="pronosticos">
-              <label class="pill-radio">
-                <input type="radio" name="p_${p.numero}" value="L" />
-                <span>L <small>${p.local || ''}</small></span>
-              </label>
-              <label class="pill-radio">
-                <input type="radio" name="p_${p.numero}" value="E" />
-                <span>E <small>Empate</small></span>
-              </label>
-              <label class="pill-radio">
-                <input type="radio" name="p_${p.numero}" value="V" />
-                <span>V <small>${p.visita || ''}</small></span>
-              </label>
+            <label class="pill-radio">
+              <input type="radio" name="p_${p.numero}" value="L">
+              <span>L</span>
+            </label>
+          </td>
+
+          <td class="col-team">
+            <div class="team">
+              <img src="${localLogo}" class="team-logo" onerror="this.style.display='none'">
+              <span class="team-name">${p.local || ""}</span>
             </div>
+          </td>
+
+          <td class="col-pron">
+            <label class="pill-radio">
+              <input type="radio" name="p_${p.numero}" value="E">
+              <span>E</span>
+            </label>
+          </td>
+
+          <td class="col-team">
+            <div class="team">
+              <img src="${visitaLogo}" class="team-logo" onerror="this.style.display='none'">
+              <span class="team-name">${p.visita || ""}</span>
+            </div>
+          </td>
+
+          <td class="col-pron">
+            <label class="pill-radio">
+              <input type="radio" name="p_${p.numero}" value="V">
+              <span>V</span>
+            </label>
           </td>
         `;
 
@@ -444,95 +497,86 @@
 
     function limpiarSeleccion() {
       const radios = tbody.querySelectorAll('input[type="radio"]');
-      radios.forEach(r => (r.checked = false));
-      statusEl.textContent = 'Selección limpiada. Marca de nuevo tus pronósticos.';
-      statusEl.className = 'status';
+      radios.forEach(r => r.checked = false);
+      statusEl.textContent = "Selección limpiada. Marca de nuevo tus pronósticos.";
+      statusEl.className = "status";
     }
 
     async function enviarQuiniela() {
       try {
-        statusEl.className = 'status';
-        statusEl.textContent = '';
+        statusEl.className = "status";
+        statusEl.textContent = "";
 
-        const telefono = (inputTelefono.value || '').trim();
-        const nombre = (inputNombre.value || '').trim();
+        const telefono = (inputTelefono.value || "").trim();
+        const nombre = (inputNombre.value || "").trim();
 
         if (!telefono) {
-          statusEl.textContent = 'Ingresa un teléfono de WhatsApp.';
-          statusEl.className = 'status error';
+          statusEl.textContent = "Ingresa un teléfono de WhatsApp.";
+          statusEl.className = "status error";
           return;
         }
 
-        const filas = tbody.querySelectorAll('tr');
+        const filas = tbody.querySelectorAll("tr");
         const partidos = [];
         let faltan = 0;
 
-        filas.forEach((tr, index) => {
-          const local = tr.dataset.local || '';
-          const visita = tr.dataset.visita || '';
-
+        filas.forEach(tr => {
+          const local = tr.dataset.local || "";
+          const visita = tr.dataset.visita || "";
           const checked = tr.querySelector('input[type="radio"]:checked');
-          const pronostico = checked ? checked.value : '';
+          const pronostico = checked ? checked.value : "";
 
           if (!pronostico) faltan++;
 
-          partidos.push({
-            local,
-            visita,
-            pronostico
-          });
+          partidos.push({ local, visita, pronostico });
         });
 
         if (partidos.length === 0) {
-          statusEl.textContent = 'No hay partidos para enviar.';
-          statusEl.className = 'status error';
+          statusEl.textContent = "No hay partidos para enviar.";
+          statusEl.className = "status error";
           return;
         }
 
         if (faltan > 0) {
-          statusEl.textContent = 'Te falta seleccionar pronóstico en ' + faltan + ' partido(s).';
-          statusEl.className = 'status error';
+          statusEl.textContent = "Te falta seleccionar pronóstico en " + faltan + " partido(s).";
+          statusEl.className = "status error";
           return;
         }
 
         btnEnviar.disabled = true;
-        statusEl.textContent = 'Enviando quiniela...';
+        statusEl.textContent = "Enviando quiniela...";
 
-        const payload = {
-          nombre,
-          telefono,
-          partidos
-        };
+        const payload = { nombre, telefono, partidos };
 
         const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
         const data = await res.json();
-
         if (!data.ok) {
-          throw new Error(data.message || 'Error al registrar la quiniela');
+          throw new Error(data.message || "Error al registrar la quiniela");
         }
 
-        statusEl.textContent = 'Quiniela registrada correctamente.';
-        statusEl.className = 'status success';
+        statusEl.textContent = "Quiniela registrada correctamente.";
+        statusEl.className = "status success";
 
         if (data.whatsappUrl) {
-          window.open(data.whatsappUrl, '_blank');
+          window.open(data.whatsappUrl, "_blank");
         }
+
       } catch (err) {
         console.error(err);
-        statusEl.textContent = 'Error al enviar la quiniela.';
-        statusEl.className = 'status error';
+        statusEl.textContent = "Error al enviar la quiniela.";
+        statusEl.className = "status error";
       } finally {
         btnEnviar.disabled = false;
       }
     }
 
-    btnLimpiar.addEventListener('click', limpiarSeleccion);
-    btnEnviar.addEventListener('click', enviarQuiniela);
+    btnLimpiar.addEventListener("click", limpiarSeleccion);
+    btnEnviar.addEventListener("click", enviarQuiniela);
 
     cargarConfig();
   </script>
