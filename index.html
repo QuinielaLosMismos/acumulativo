@@ -377,16 +377,7 @@
 
         <div class="table-wrapper">
           <table>
-            <thead>
-              <tr>
-                <th class="col-num">#</th>
-                <th class="col-pron">L</th>
-                <th class="col-team" id="th-local"></th>
-                <th class="col-pron">E</th>
-                <th class="col-team" id="th-visita"></th>
-                <th class="col-pron">V</th>
-              </tr>
-            </thead>
+            
             <tbody id="tbody-partidos"></tbody>
           </table>
         </div>
@@ -529,75 +520,84 @@
     }
 
     async function enviarQuiniela() {
-      try {
-        statusEl.className = "status";
-        statusEl.textContent = "";
+  try {
+    statusEl.className = "status";
+    statusEl.textContent = "";
 
-        const telefono = (inputTelefono.value || "").trim();
-        const nombre = (inputNombre.value || "").trim();
+    const telefono = (inputTelefono.value || "").trim();
+    const nombre = (inputNombre.value || "").trim();
 
-        if (!telefono) {
-          statusEl.textContent = "Ingresa un teléfono.";
-          statusEl.className = "status error";
-          return;
-        }
-
-        const filas = tbody.querySelectorAll("tr");
-        const partidos = [];
-        let faltan = 0;
-
-        filas.forEach(tr => {
-          const local = tr.dataset.local || "";
-          const visita = tr.dataset.visita || "";
-          const checked = tr.querySelector('input[type="radio"]:checked');
-          const pronostico = checked ? checked.value : "";
-
-          if (!pronostico) faltan++;
-          partidos.push({ local, visita, pronostico });
-        });
-
-        if (partidos.length === 0) {
-          statusEl.textContent = "No hay partidos para enviar.";
-          statusEl.className = "status error";
-          return;
-        }
-
-        if (faltan > 0) {
-          statusEl.textContent = "Te falta seleccionar pronóstico en " + faltan + " partido(s).";
-          statusEl.className = "status error";
-          return;
-        }
-
-        btnEnviar.disabled = true;
-        statusEl.textContent = "Enviando quiniela...";
-
-        const payload = { nombre, telefono, partidos };
-
-        const res = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (!data.ok) {
-          throw new Error(data.message || "Error al registrar la quiniela");
-        }
-
-        statusEl.textContent = "Quiniela registrada correctamente.";
-        statusEl.className = "status success";
-
-        if (data.whatsappUrl) {
-          window.open(data.whatsappUrl, "_blank");
-        }
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "Error al enviar la quiniela.";
-        statusEl.className = "status error";
-      } finally {
-        btnEnviar.disabled = false;
-      }
+    if (!telefono) {
+      statusEl.textContent = "Ingresa un teléfono.";
+      statusEl.className = "status error";
+      return;
     }
+
+    const filas = tbody.querySelectorAll("tr");
+    const partidos = [];
+    let faltan = 0;
+
+    filas.forEach(tr => {
+      const local = tr.dataset.local || "";
+      const visita = tr.dataset.visita || "";
+      const checked = tr.querySelector('input[type="radio"]:checked');
+      const pronostico = checked ? checked.value : "";
+
+      if (!pronostico) faltan++;
+      partidos.push({ local, visita, pronostico });
+    });
+
+    if (partidos.length === 0) {
+      statusEl.textContent = "No hay partidos para enviar.";
+      statusEl.className = "status error";
+      return;
+    }
+
+    if (faltan > 0) {
+      statusEl.textContent = "Te falta seleccionar pronóstico en " + faltan + " partido(s).";
+      statusEl.className = "status error";
+      return;
+    }
+
+    btnEnviar.disabled = true;
+    statusEl.textContent = "Enviando quiniela...";
+
+    const payload = { nombre, telefono, partidos };
+
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      redirect: "follow"
+    });
+
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error("Respuesta no válida del servidor: " + raw.slice(0, 180));
+    }
+
+    if (!res.ok || !data.ok) {
+      throw new Error(data.message || "Error al registrar la quiniela");
+    }
+
+    statusEl.textContent = "Quiniela registrada correctamente.";
+    statusEl.className = "status success";
+
+    if (data.whatsappUrl) {
+      window.open(data.whatsappUrl, "_blank");
+    }
+
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = err.message || "Error al enviar la quiniela.";
+    statusEl.className = "status error";
+  } finally {
+    btnEnviar.disabled = false;
+  }
+}
 
     btnLimpiar.addEventListener("click", limpiarSeleccion);
     btnEnviar.addEventListener("click", enviarQuiniela);
