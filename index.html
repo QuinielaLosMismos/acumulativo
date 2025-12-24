@@ -8,16 +8,15 @@
 <style>
 :root{
   --bg:#eaf0fb;
-  --panel:#e1eaf8;
   --matches:#d6e2f5;
   --rowA:#dbe6f8;
   --rowB:#cfdcf2;
 
-  --fieldLight:#dbe6fb;     /* campos un poco más claros */
-  --fieldLight2:#d2dff8;
+  /* Campos 20% más oscuros */
+  --fieldBlue:#c3d3f3;
+  --fieldBlue2:#b7c9ee;
 
   --text:#0f172a;
-  --muted:#334155;
   --white:#ffffff;
   --danger:#b91c1c;
 
@@ -37,73 +36,69 @@ body{
   background:var(--bg);
   color:var(--text);
 }
+
 .app{
   min-height:100vh;
   display:flex;
   flex-direction:column;
 }
 
-/* ===== BANNER (sin recorte arriba) ===== */
+/* ===== BANNER ===== */
 .banner{
   position:relative;
-  height:200px;
-  background: url("assets/banner.png") center top / contain no-repeat;
-  background-color: #0b2a6a; /* por si sobran márgenes laterales, se ve bien */
+  height:210px;
+  background:url("assets/banner.png") center top / cover no-repeat;
   overflow:hidden;
 }
 
-/* overlay suave solo para que la jornada se lea */
+/* Overlay suave */
 .banner::after{
   content:"";
   position:absolute;
   inset:0;
-  background:linear-gradient(to bottom, rgba(0,0,0,.06), rgba(0,0,0,.28));
+  background:linear-gradient(to bottom, rgba(0,0,0,.06), rgba(0,0,0,.30));
 }
 
-/* niebla discreta */
+/* Niebla sutil */
 .banner::before{
   content:"";
   position:absolute;
-  inset:-30px -30px -30px -30px;
+  inset:-30px;
   background:
-    radial-gradient(circle at 20% 40%, rgba(255,255,255,.18) 0, transparent 45%),
-    radial-gradient(circle at 70% 25%, rgba(255,255,255,.14) 0, transparent 50%),
-    radial-gradient(circle at 85% 55%, rgba(255,255,255,.12) 0, transparent 55%);
+    radial-gradient(circle at 20% 45%, rgba(255,255,255,.18) 0, transparent 45%),
+    radial-gradient(circle at 70% 25%, rgba(255,255,255,.14) 0, transparent 50%);
   filter: blur(6px);
-  opacity: .40;
-  mix-blend-mode: overlay;
+  opacity:.38;
   animation: fog 10s ease-in-out infinite alternate;
   pointer-events:none;
-  z-index:1;
 }
 @keyframes fog{
-  from{ transform: translateX(-4%) translateY(0); }
-  to{ transform: translateX(4%) translateY(-6px); }
+  from{ transform: translateX(-3%); }
+  to{ transform: translateX(3%); }
 }
 
+/* Jornada */
 .banner-inner{
   position:absolute;
   inset:0;
-  z-index:2;
   display:flex;
   align-items:flex-end;
-  justify-content:flex-end;
-  padding:10px;
+  justify-content:flex-start;
+  padding:12px;
+  z-index:2;
 }
 
-/* Jornada discreta y esquinada abajo */
 .jornada-pill{
-  font-size:.78rem;
+  font-size:.75rem;
   font-weight:900;
-  letter-spacing:.10em;
+  letter-spacing:.12em;
+  padding:6px 12px;
+  background:rgba(0,0,0,.30);
+  color:#ffffff;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.25);
+  transform: rotate(-3deg);
   text-transform:uppercase;
-  padding:6px 10px;
-  border-radius:999px;
-  background:rgba(0,0,0,.22);
-  border:1px solid rgba(255,255,255,.22);
-  color:#fff;
-  backdrop-filter: blur(6px);
-  opacity:.9;
 }
 
 /* ===== CONTENT ===== */
@@ -115,7 +110,7 @@ body{
   gap:12px;
 }
 
-/* ===== INPUTS (sin metadatos) ===== */
+/* ===== INPUTS ===== */
 .inputs{
   display:flex;
   flex-direction:column;
@@ -123,11 +118,11 @@ body{
 }
 
 .field{
-  background: linear-gradient(180deg, var(--fieldLight), var(--fieldLight2));
+  background:linear-gradient(180deg, var(--fieldBlue), var(--fieldBlue2));
   border-radius:14px;
-  padding:10px 12px;
-  border: 1px solid rgba(255,255,255,.65);
-  box-shadow: var(--shadow);
+  padding:12px;
+  border:1px solid rgba(255,255,255,.6);
+  box-shadow:var(--shadow);
 }
 
 .inline-input{
@@ -137,9 +132,10 @@ body{
   background:transparent;
   font-size:1rem;
   color:var(--text);
-  padding:0;
 }
-.inline-input::placeholder{ color: rgba(15,23,42,.45); }
+.inline-input::placeholder{
+  color:rgba(15,23,42,.45);
+}
 
 /* ===== MATCHES ===== */
 .matches{
@@ -147,8 +143,8 @@ body{
   background:var(--matches);
   border-radius:16px;
   overflow:hidden;
-  border: 2px solid var(--cardBorder); /* borde blanco ligero */
-  box-shadow: var(--shadow);
+  border:2px solid var(--cardBorder);
+  box-shadow:var(--shadow);
 }
 
 table{
@@ -159,12 +155,11 @@ table{
 
 td{
   padding:10px 6px;
-  vertical-align:middle;
 }
 
 tbody tr:nth-child(odd){background:var(--rowA)}
 tbody tr:nth-child(even){background:var(--rowB)}
-tbody tr{ border-top: 1px solid var(--rowBorder); }
+tbody tr{ border-top:1px solid var(--rowBorder); }
 
 .pick{
   width:42px;
@@ -182,20 +177,13 @@ tbody tr{ border-top: 1px solid var(--rowBorder); }
   border-radius:12px;
   border:2px solid var(--pick);
   color:var(--pick);
-  font-weight:950;
-  background:transparent;
-  transition: background .14s ease, color .14s ease, transform .09s ease, box-shadow .14s ease;
+  font-weight:900;
 }
 .pick input:checked + span{
   background:var(--pickDark);
   color:#ffffff;
-  box-shadow: 0 0 0 4px rgba(95,125,210,.18);
-  transform: translateY(-1px);
-  animation: pop .18s ease-out;
-}
-@keyframes pop{
-  0%{ transform: translateY(-1px) scale(0.96); }
-  100%{ transform: translateY(-1px) scale(1); }
+  box-shadow:0 0 0 4px rgba(95,125,210,.18);
+  transform:translateY(-1px);
 }
 
 .teamCell{
@@ -207,16 +195,14 @@ tbody tr{ border-top: 1px solid var(--rowBorder); }
   flex-direction:column;
   align-items:center;
   gap:4px;
-  font-weight:950;
+  font-weight:900;
   text-transform:uppercase;
   font-size:.82rem;
-  color:var(--text);
 }
 .team img{
   width:26px;
   height:26px;
   object-fit:contain;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.18));
 }
 
 /* ===== FOOTER ===== */
@@ -224,16 +210,11 @@ tbody tr{ border-top: 1px solid var(--rowBorder); }
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
 }
 
-/* status existe para errores/éxito, pero NO mostramos “selecciona…” */
 .status{
-  font-size:.88rem;
-  font-weight:800;
-  color:var(--muted);
-  min-height: 1.2em; /* reserva espacio */
+  min-height:1.2em;
+  font-size:.85rem;
 }
 .status.error{color:var(--danger)}
 .status.success{color:#166534}
@@ -241,17 +222,14 @@ tbody tr{ border-top: 1px solid var(--rowBorder); }
 .actions{
   display:flex;
   gap:10px;
-  margin-left:auto;
 }
-
 button{
   border:none;
   border-radius:999px;
   padding:10px 18px;
-  font-size:.92rem;
-  font-weight:950;
+  font-size:.9rem;
+  font-weight:900;
   cursor:pointer;
-  box-shadow: var(--shadow);
 }
 .btn-clear{
   background:#ffffff;
@@ -260,16 +238,6 @@ button{
 .btn-send{
   background:var(--pickDark);
   color:#ffffff;
-}
-
-/* Responsive */
-@media (max-width: 390px){
-  .banner{height:185px}
-  td{padding:9px 5px}
-  .pick span{width:34px;height:30px}
-  .team{font-size:.78rem}
-  .team img{width:24px;height:24px}
-  button{padding:10px 14px}
 }
 </style>
 </head>
@@ -287,10 +255,10 @@ button{
 
     <div class="inputs">
       <div class="field">
-        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono" />
+        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono">
       </div>
       <div class="field">
-        <input id="nombre" class="inline-input" type="text" placeholder="Nombre" />
+        <input id="nombre" class="inline-input" type="text" placeholder="Nombre">
       </div>
     </div>
 
@@ -327,60 +295,42 @@ function logo(team){
 
 function formatJornada(sub){
   if(!sub) return "JORNADA";
-  const m = String(sub).match(/(\d+)/);
-  if(m) return "JORNADA " + m[1];
-  return String(sub).toUpperCase();
+  const m=String(sub).match(/(\d+)/);
+  return m ? "JORNADA "+m[1] : String(sub).toUpperCase();
 }
 
 async function cargar(){
   try{
     const r=await fetch(SCRIPT_URL+"?action=getConfig");
     const d=await r.json();
-    if(!d.ok) throw new Error(d.message || "No se pudo cargar");
+    if(!d.ok) throw new Error(d.message);
 
-    jornadaPill.textContent = formatJornada(d.subtitulo);
-
+    jornadaPill.textContent=formatJornada(d.subtitulo);
     tbody.innerHTML="";
     (d.partidos||[]).forEach(p=>{
       tbody.innerHTML+=`
       <tr data-local="${p.local}" data-visita="${p.visita}">
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label></td>
-        <td class="teamCell">
-          <div class="team">
-            <img src="${logo(p.local)}" onerror="this.style.display='none'">
-            <div>${p.local}</div>
-          </div>
-        </td>
+        <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label></td>
-        <td class="teamCell">
-          <div class="team">
-            <img src="${logo(p.visita)}" onerror="this.style.display='none'">
-            <div>${p.visita}</div>
-          </div>
-        </td>
+        <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="V"><span>V</span></label></td>
       </tr>`;
     });
-
-    // NO mostramos “selecciona…”
-    statusEl.textContent = "";
-    statusEl.className = "status";
   }catch(e){
-    statusEl.textContent = e.message || "Error al cargar";
-    statusEl.className = "status error";
+    statusEl.textContent=e.message;
+    statusEl.className="status error";
   }
 }
 
 function limpiar(){
   document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
   statusEl.textContent="";
-  statusEl.className="status";
 }
 
 async function enviar(){
   try{
     const telefono=document.getElementById("telefono").value.trim();
-    const nombre=document.getElementById("nombre").value.trim();
     if(!telefono) throw new Error("Ingresa teléfono");
 
     const partidos=[];
@@ -397,17 +347,17 @@ async function enviar(){
     const r=await fetch(SCRIPT_URL,{
       method:"POST",
       headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify({telefono,nombre,partidos})
+      body:JSON.stringify({telefono,nombre:document.getElementById("nombre").value.trim(),partidos})
     });
 
     const d=JSON.parse(await r.text());
-    if(!d.ok) throw new Error(d.message || "Error al registrar");
+    if(!d.ok) throw new Error(d.message);
 
     statusEl.textContent="Enviada";
     statusEl.className="status success";
     window.open(d.whatsappUrl,"_blank");
   }catch(e){
-    statusEl.textContent=e.message || "Error";
+    statusEl.textContent=e.message;
     statusEl.className="status error";
   }
 }
