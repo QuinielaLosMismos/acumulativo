@@ -12,9 +12,9 @@
   --rowA:#dbe6f8;
   --rowB:#cfdcf2;
 
-  /* Campos: +10% oscuro */
-  --fieldBlue:#bccdf0;
-  --fieldBlue2:#b0c4ea;
+  /* Campos: +10% oscuro adicional */
+  --fieldBlue:#b4c6ee;
+  --fieldBlue2:#a9bde8;
 
   --text:#0f172a;
   --white:#ffffff;
@@ -58,7 +58,7 @@ body{
   background:linear-gradient(to bottom, rgba(0,0,0,.05), rgba(0,0,0,.28));
 }
 
-/* Niebla suave */
+/* niebla suave */
 .banner::before{
   content:"";
   position:absolute;
@@ -76,7 +76,7 @@ body{
   to{ transform: translateX(3%); }
 }
 
-/* Jornada: MÁS A LA ESQUINA */
+/* Jornada: SIN rotación, más transparente */
 .banner-inner{
   position:absolute;
   left:10px;
@@ -89,11 +89,12 @@ body{
   font-weight:900;
   letter-spacing:.12em;
   padding:5px 9px;
-  background:rgba(0,0,0,.28);
-  color:#ffffff;
+  background:rgba(0,0,0,.20);   /* +30% transparencia */
+  color:rgba(255,255,255,.70);  /* texto más suave */
   border-radius:6px;
-  border:1px solid rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,.18);
   text-transform:uppercase;
+  transform:none;               /* rotación eliminada */
 }
 
 /* ===== CONTENT ===== */
