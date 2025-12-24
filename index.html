@@ -2,33 +2,65 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Quiniela Los Mismos</title>
+<title>Quiniela</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 :root{
-  --bg:#eaf0fb;          /* azul muy claro fondo */
-  --panel:#e1eaf8;       /* inputs */
-  --matches:#d6e2f5;     /* partidos */
+  /* ===== LIGHT ===== */
+  --bg:#eaf0fb;              /* fondo azul claro */
+  --panel:#e1eaf8;           /* panel suave */
+  --matches:#d6e2f5;         /* partidos */
   --rowA:#dbe6f8;
   --rowB:#cfdcf2;
-  --pick:#5b79b8;        /* azul medio */
-  --pickDark:#425f9c;    /* azul más fuerte */
+
+  --fieldDark:#425f9c;       /* azul oscuro para campos */
+  --fieldDark2:#36518a;
+
   --text:#0f172a;
   --muted:#334155;
   --white:#ffffff;
   --danger:#b91c1c;
+
+  --pick:#5b79b8;
+  --pickDark:#425f9c;
+
+  --cardBorder: rgba(255,255,255,.75);
+  --rowBorder: rgba(255,255,255,.35);
+
+  --shadow: 0 10px 24px rgba(2,6,23,.12);
+}
+
+[data-theme="dark"]{
+  /* ===== DARK ===== */
+  --bg:#0b1328;
+  --panel:#111c38;
+  --matches:#0f1a35;
+  --rowA:#101d3c;
+  --rowB:#0e1934;
+
+  --fieldDark:#1d2d5a;
+  --fieldDark2:#17264f;
+
+  --text:#e8eefc;
+  --muted:#b7c3df;
+
+  --pick:#8aa3df;
+  --pickDark:#5f7dd2;
+
+  --cardBorder: rgba(255,255,255,.22);
+  --rowBorder: rgba(255,255,255,.14);
+
+  --shadow: 0 14px 32px rgba(0,0,0,.35);
 }
 
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-
 body{
   margin:0;
   min-height:100vh;
   background:var(--bg);
   color:var(--text);
 }
-
 .app{
   min-height:100vh;
   display:flex;
@@ -38,46 +70,105 @@ body{
 /* ===== BANNER ===== */
 .banner{
   position:relative;
-  height:180px;
+  height:190px;
   background:url("assets/banner.png") center/cover no-repeat;
-  display:flex;
-  align-items:flex-end;
+  overflow:hidden;
+  border-bottom: 1px solid rgba(255,255,255,.25);
 }
 
+/* Oscurece un poquito para que la jornada se lea */
 .banner::after{
   content:"";
   position:absolute;
   inset:0;
-  background:linear-gradient(
-    to bottom,
-    rgba(0,0,0,.25),
-    rgba(0,0,0,.55)
-  );
+  background:linear-gradient(to bottom, rgba(0,0,0,.10), rgba(0,0,0,.48));
+}
+
+/* Niebla/humo suave animado */
+.banner::before{
+  content:"";
+  position:absolute;
+  inset:-40px -40px -40px -40px;
+  background:
+    radial-gradient(circle at 10% 35%, rgba(255,255,255,.20) 0, transparent 45%),
+    radial-gradient(circle at 55% 15%, rgba(255,255,255,.16) 0, transparent 48%),
+    radial-gradient(circle at 85% 40%, rgba(255,255,255,.18) 0, transparent 50%),
+    radial-gradient(circle at 35% 65%, rgba(255,255,255,.10) 0, transparent 55%);
+  filter: blur(6px);
+  opacity: .55;
+  mix-blend-mode: overlay;
+  transform: translateX(-6%);
+  animation: fog 10s ease-in-out infinite alternate;
+  pointer-events:none;
+  z-index:1;
+}
+
+@keyframes fog{
+  from{ transform: translateX(-6%) translateY(0); opacity:.45; }
+  to{ transform: translateX(6%) translateY(-6px); opacity:.62; }
 }
 
 .banner-inner{
-  position:relative;
-  z-index:1;
-  padding:14px;
-  color:#ffffff;
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  padding:12px;
+  z-index:2;
 }
 
-.title{
-  font-size:1.4rem;
+.jornada-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.30);
+  color:#fff;
   font-weight:900;
-  letter-spacing:.12em;
+  letter-spacing:.06em;
   text-transform:uppercase;
+  backdrop-filter: blur(6px);
 }
 
-.subtitle{
-  font-size:1rem;
-  font-weight:700;
-  opacity:.95;
+/* Switch modo oscuro */
+.theme-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:999px;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.26);
+  color:#fff;
+  font-weight:800;
+  font-size:.8rem;
+  backdrop-filter: blur(6px);
+  user-select:none;
 }
-
-.cierre{
-  font-size:.85rem;
-  opacity:.85;
+.theme-toggle input{
+  width:42px; height:24px;
+  appearance:none;
+  background:rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:999px;
+  position:relative;
+  outline:none;
+  cursor:pointer;
+}
+.theme-toggle input::after{
+  content:"";
+  position:absolute;
+  top:3px; left:3px;
+  width:16px; height:16px;
+  border-radius:50%;
+  background:#fff;
+  transition: transform .18s ease;
+}
+.theme-toggle input:checked::after{
+  transform: translateX(18px);
 }
 
 /* ===== CONTENT ===== */
@@ -95,29 +186,34 @@ body{
   flex-direction:column;
   gap:10px;
 }
-
 .field{
-  background:var(--panel);
+  background: linear-gradient(180deg, var(--fieldDark), var(--fieldDark2));
   border-radius:14px;
-  padding:10px 12px 8px;
+  padding:10px 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,.16);
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
-
 .label{
-  font-size:.75rem;
-  font-weight:800;
-  letter-spacing:.12em;
-  color:var(--muted);
-  margin-bottom:4px;
+  font-size:.78rem;
+  font-weight:900;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  color: rgba(255,255,255,.88);
+  white-space:nowrap;
 }
-
-input{
-  width:100%;
+.inline-input{
+  flex:1;
   border:none;
   outline:none;
   background:transparent;
   font-size:1rem;
-  color:var(--text);
+  color:#ffffff;
+  padding:0;
 }
+.inline-input::placeholder{ color: rgba(255,255,255,.55); }
 
 /* ===== MATCHES ===== */
 .matches{
@@ -125,27 +221,27 @@ input{
   background:var(--matches);
   border-radius:16px;
   overflow:hidden;
+  border: 2px solid var(--cardBorder);    /* borde blanco ligero */
+  box-shadow: var(--shadow);
 }
 
 table{
   width:100%;
   border-collapse:collapse;
-  font-size:.9rem;
+  font-size:.92rem;
 }
-
 td{
   padding:10px 6px;
   vertical-align:middle;
 }
-
 tbody tr:nth-child(odd){background:var(--rowA)}
 tbody tr:nth-child(even){background:var(--rowB)}
+tbody tr{ border-top: 1px solid var(--rowBorder); }
 
 .pick{
   width:42px;
   text-align:center;
 }
-
 .pick label{position:relative;display:inline-block}
 .pick input{position:absolute;opacity:0}
 
@@ -158,35 +254,45 @@ tbody tr:nth-child(even){background:var(--rowB)}
   border-radius:12px;
   border:2px solid var(--pick);
   color:var(--pick);
-  font-weight:900;
+  font-weight:950;
   background:transparent;
+  transition: background .14s ease, color .14s ease, transform .09s ease, box-shadow .14s ease;
 }
 
-.pick input:checked+span{
+/* Seleccionada: relleno azul y letra blanca + pulse */
+.pick input:checked + span{
   background:var(--pickDark);
   color:#ffffff;
+  box-shadow: 0 0 0 4px rgba(95,125,210,.18);
+  transform: translateY(-1px);
+  animation: pop .18s ease-out;
+}
+@keyframes pop{
+  0%{ transform: translateY(-1px) scale(0.96); }
+  100%{ transform: translateY(-1px) scale(1); }
 }
 
-/* equipo */
 .teamCell{
   width:33%;
   text-align:center;
 }
-
 .team{
   display:flex;
   flex-direction:column;
   align-items:center;
   gap:4px;
-  font-weight:900;
+  font-weight:950;
   text-transform:uppercase;
-  font-size:.8rem;
+  font-size:.82rem;
+  color:var(--text);
 }
+[data-theme="dark"] .team{ color: var(--text); }
 
 .team img{
   width:26px;
   height:26px;
   object-fit:contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.18));
 }
 
 /* ===== FOOTER ===== */
@@ -195,51 +301,61 @@ tbody tr:nth-child(even){background:var(--rowB)}
   justify-content:space-between;
   align-items:center;
   gap:10px;
+  flex-wrap:wrap;
 }
-
 .status{
-  font-size:.85rem;
-  font-weight:700;
+  font-size:.88rem;
+  font-weight:800;
   color:var(--muted);
 }
-
 .status.error{color:var(--danger)}
 .status.success{color:#166534}
-
-.actions{
-  display:flex;
-  gap:10px;
-}
-
+.actions{display:flex;gap:10px;margin-left:auto}
 button{
   border:none;
   border-radius:999px;
   padding:10px 18px;
-  font-size:.9rem;
-  font-weight:900;
+  font-size:.92rem;
+  font-weight:950;
   cursor:pointer;
+  box-shadow: var(--shadow);
 }
-
 .btn-clear{
   background:#ffffff;
   color:var(--pickDark);
 }
-
+[data-theme="dark"] .btn-clear{
+  background:#e8eefc;
+  color:#22325a;
+}
 .btn-send{
   background:var(--pickDark);
   color:#ffffff;
 }
+
+/* Responsive */
+@media (max-width: 390px){
+  .banner{height:175px}
+  td{padding:9px 5px}
+  .pick span{width:34px;height:30px}
+  .team{font-size:.78rem}
+  .team img{width:24px;height:24px}
+}
+
 </style>
 </head>
 
 <body>
-<div class="app">
+<div class="app" id="app">
 
   <div class="banner">
     <div class="banner-inner">
-      <div class="title">QUINIELA LOS MISMOS</div>
-      <div id="subtitulo" class="subtitle"></div>
-      <div id="cierre" class="cierre"></div>
+      <div class="jornada-pill" id="jornada-pill">JORNADA</div>
+
+      <label class="theme-toggle" title="Modo oscuro">
+        Oscuro
+        <input id="themeSwitch" type="checkbox" />
+      </label>
     </div>
   </div>
 
@@ -248,11 +364,12 @@ button{
     <div class="inputs">
       <div class="field">
         <div class="label">TELÉFONO</div>
-        <input id="telefono" type="tel">
+        <input id="telefono" class="inline-input" type="tel" placeholder="Ej: 3312345678" />
       </div>
+
       <div class="field">
         <div class="label">NOMBRE</div>
-        <input id="nombre" type="text">
+        <input id="nombre" class="inline-input" type="text" placeholder="Ej: Osvaldo" />
       </div>
     </div>
 
@@ -277,7 +394,29 @@ button{
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
 const tbody=document.getElementById("tbody");
 const statusEl=document.getElementById("status");
+const jornadaPill=document.getElementById("jornada-pill");
+const app=document.getElementById("app");
+const themeSwitch=document.getElementById("themeSwitch");
 
+// ===== Theme (persistente) =====
+(function initTheme(){
+  const saved = localStorage.getItem("qlm_theme");
+  if(saved === "dark"){
+    app.setAttribute("data-theme","dark");
+    themeSwitch.checked = true;
+  }
+  themeSwitch.addEventListener("change", ()=>{
+    if(themeSwitch.checked){
+      app.setAttribute("data-theme","dark");
+      localStorage.setItem("qlm_theme","dark");
+    } else {
+      app.removeAttribute("data-theme");
+      localStorage.setItem("qlm_theme","light");
+    }
+  });
+})();
+
+// ===== Logos =====
 function logo(team){
   let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .toLowerCase().replace(/[^a-z0-9]/g,"");
@@ -286,36 +425,63 @@ function logo(team){
   return "assets/"+s+".png";
 }
 
+// Extrae "Jornada 1" -> "JORNADA 1"
+function formatJornada(sub){
+  if(!sub) return "JORNADA";
+  // busca número
+  const m = String(sub).match(/(\d+)/);
+  if(m) return "JORNADA " + m[1];
+  // si no, úsalo tal cual en mayúsculas
+  return String(sub).toUpperCase();
+}
+
 async function cargar(){
   try{
     const r=await fetch(SCRIPT_URL+"?action=getConfig");
     const d=await r.json();
-    if(!d.ok) throw new Error(d.message);
+    if(!d.ok) throw new Error(d.message || "No se pudo cargar");
 
-    document.getElementById("subtitulo").textContent=d.subtitulo||"";
-    document.getElementById("cierre").textContent=d.cierre?("Cierre: "+d.cierre):"";
+    // Banner: SOLO jornada
+    jornadaPill.textContent = formatJornada(d.subtitulo);
 
     tbody.innerHTML="";
-    d.partidos.forEach(p=>{
+    (d.partidos||[]).forEach(p=>{
       tbody.innerHTML+=`
       <tr data-local="${p.local}" data-visita="${p.visita}">
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label></td>
-        <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
+
+        <td class="teamCell">
+          <div class="team">
+            <img src="${logo(p.local)}" onerror="this.style.display='none'">
+            <div>${p.local}</div>
+          </div>
+        </td>
+
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label></td>
-        <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
+
+        <td class="teamCell">
+          <div class="team">
+            <img src="${logo(p.visita)}" onerror="this.style.display='none'">
+            <div>${p.visita}</div>
+          </div>
+        </td>
+
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="V"><span>V</span></label></td>
       </tr>`;
     });
 
     statusEl.textContent="Selecciona tus pronósticos";
+    statusEl.className="status";
   }catch(e){
-    statusEl.textContent=e.message;
+    statusEl.textContent=e.message || "Error al cargar";
     statusEl.className="status error";
   }
 }
 
 function limpiar(){
   document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
+  statusEl.textContent="Listo.";
+  statusEl.className="status";
 }
 
 async function enviar(){
@@ -342,13 +508,13 @@ async function enviar(){
     });
 
     const d=JSON.parse(await r.text());
-    if(!d.ok) throw new Error(d.message);
+    if(!d.ok) throw new Error(d.message || "Error al registrar");
 
     statusEl.textContent="Quiniela enviada";
     statusEl.className="status success";
     window.open(d.whatsappUrl,"_blank");
   }catch(e){
-    statusEl.textContent=e.message;
+    statusEl.textContent=e.message || "Error";
     statusEl.className="status error";
   }
 }
