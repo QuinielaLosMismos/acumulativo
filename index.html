@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Quiniela</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <style>
 :root{
-  /* ===== LIGHT ===== */
-  --bg:#eaf0fb;              /* fondo azul claro */
-  --panel:#e1eaf8;           /* panel suave */
-  --matches:#d6e2f5;         /* partidos */
+  --bg:#eaf0fb;
+  --panel:#e1eaf8;
+  --matches:#d6e2f5;
   --rowA:#dbe6f8;
   --rowB:#cfdcf2;
 
-  --fieldDark:#425f9c;       /* azul oscuro para campos */
-  --fieldDark2:#36518a;
+  --fieldLight:#dbe6fb;     /* campos un poco más claros */
+  --fieldLight2:#d2dff8;
 
   --text:#0f172a;
   --muted:#334155;
@@ -31,29 +30,6 @@
   --shadow: 0 10px 24px rgba(2,6,23,.12);
 }
 
-[data-theme="dark"]{
-  /* ===== DARK ===== */
-  --bg:#0b1328;
-  --panel:#111c38;
-  --matches:#0f1a35;
-  --rowA:#101d3c;
-  --rowB:#0e1934;
-
-  --fieldDark:#1d2d5a;
-  --fieldDark2:#17264f;
-
-  --text:#e8eefc;
-  --muted:#b7c3df;
-
-  --pick:#8aa3df;
-  --pickDark:#5f7dd2;
-
-  --cardBorder: rgba(255,255,255,.22);
-  --rowBorder: rgba(255,255,255,.14);
-
-  --shadow: 0 14px 32px rgba(0,0,0,.35);
-}
-
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
 body{
   margin:0;
@@ -67,108 +43,67 @@ body{
   flex-direction:column;
 }
 
-/* ===== BANNER ===== */
+/* ===== BANNER (sin recorte arriba) ===== */
 .banner{
   position:relative;
-  height:190px;
-  background:url("assets/banner.png") center/cover no-repeat;
+  height:200px;
+  background: url("assets/banner.png") center top / contain no-repeat;
+  background-color: #0b2a6a; /* por si sobran márgenes laterales, se ve bien */
   overflow:hidden;
-  border-bottom: 1px solid rgba(255,255,255,.25);
 }
 
-/* Oscurece un poquito para que la jornada se lea */
+/* overlay suave solo para que la jornada se lea */
 .banner::after{
   content:"";
   position:absolute;
   inset:0;
-  background:linear-gradient(to bottom, rgba(0,0,0,.10), rgba(0,0,0,.48));
+  background:linear-gradient(to bottom, rgba(0,0,0,.06), rgba(0,0,0,.28));
 }
 
-/* Niebla/humo suave animado */
+/* niebla discreta */
 .banner::before{
   content:"";
   position:absolute;
-  inset:-40px -40px -40px -40px;
+  inset:-30px -30px -30px -30px;
   background:
-    radial-gradient(circle at 10% 35%, rgba(255,255,255,.20) 0, transparent 45%),
-    radial-gradient(circle at 55% 15%, rgba(255,255,255,.16) 0, transparent 48%),
-    radial-gradient(circle at 85% 40%, rgba(255,255,255,.18) 0, transparent 50%),
-    radial-gradient(circle at 35% 65%, rgba(255,255,255,.10) 0, transparent 55%);
+    radial-gradient(circle at 20% 40%, rgba(255,255,255,.18) 0, transparent 45%),
+    radial-gradient(circle at 70% 25%, rgba(255,255,255,.14) 0, transparent 50%),
+    radial-gradient(circle at 85% 55%, rgba(255,255,255,.12) 0, transparent 55%);
   filter: blur(6px);
-  opacity: .55;
+  opacity: .40;
   mix-blend-mode: overlay;
-  transform: translateX(-6%);
   animation: fog 10s ease-in-out infinite alternate;
   pointer-events:none;
   z-index:1;
 }
-
 @keyframes fog{
-  from{ transform: translateX(-6%) translateY(0); opacity:.45; }
-  to{ transform: translateX(6%) translateY(-6px); opacity:.62; }
+  from{ transform: translateX(-4%) translateY(0); }
+  to{ transform: translateX(4%) translateY(-6px); }
 }
 
 .banner-inner{
   position:absolute;
   inset:0;
+  z-index:2;
   display:flex;
   align-items:flex-end;
-  justify-content:space-between;
-  padding:12px;
-  z-index:2;
+  justify-content:flex-end;
+  padding:10px;
 }
 
+/* Jornada discreta y esquinada abajo */
 .jornada-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 14px;
-  border-radius:999px;
-  background:rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.30);
-  color:#fff;
+  font-size:.78rem;
   font-weight:900;
-  letter-spacing:.06em;
+  letter-spacing:.10em;
   text-transform:uppercase;
-  backdrop-filter: blur(6px);
-}
-
-/* Switch modo oscuro */
-.theme-toggle{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:8px 10px;
+  padding:6px 10px;
   border-radius:999px;
-  background:rgba(0,0,0,.28);
-  border:1px solid rgba(255,255,255,.26);
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.22);
   color:#fff;
-  font-weight:800;
-  font-size:.8rem;
   backdrop-filter: blur(6px);
-  user-select:none;
-}
-.theme-toggle input{
-  width:42px; height:24px;
-  appearance:none;
-  background:rgba(255,255,255,.25);
-  border:1px solid rgba(255,255,255,.25);
-  border-radius:999px;
-  position:relative;
-  outline:none;
-  cursor:pointer;
-}
-.theme-toggle input::after{
-  content:"";
-  position:absolute;
-  top:3px; left:3px;
-  width:16px; height:16px;
-  border-radius:50%;
-  background:#fff;
-  transition: transform .18s ease;
-}
-.theme-toggle input:checked::after{
-  transform: translateX(18px);
+  opacity:.9;
 }
 
 /* ===== CONTENT ===== */
@@ -180,40 +115,31 @@ body{
   gap:12px;
 }
 
-/* ===== INPUTS ===== */
+/* ===== INPUTS (sin metadatos) ===== */
 .inputs{
   display:flex;
   flex-direction:column;
   gap:10px;
 }
+
 .field{
-  background: linear-gradient(180deg, var(--fieldDark), var(--fieldDark2));
+  background: linear-gradient(180deg, var(--fieldLight), var(--fieldLight2));
   border-radius:14px;
   padding:10px 12px;
+  border: 1px solid rgba(255,255,255,.65);
   box-shadow: var(--shadow);
-  border: 1px solid rgba(255,255,255,.16);
-  display:flex;
-  align-items:center;
-  gap:10px;
 }
-.label{
-  font-size:.78rem;
-  font-weight:900;
-  letter-spacing:.10em;
-  text-transform:uppercase;
-  color: rgba(255,255,255,.88);
-  white-space:nowrap;
-}
+
 .inline-input{
-  flex:1;
+  width:100%;
   border:none;
   outline:none;
   background:transparent;
   font-size:1rem;
-  color:#ffffff;
+  color:var(--text);
   padding:0;
 }
-.inline-input::placeholder{ color: rgba(255,255,255,.55); }
+.inline-input::placeholder{ color: rgba(15,23,42,.45); }
 
 /* ===== MATCHES ===== */
 .matches{
@@ -221,7 +147,7 @@ body{
   background:var(--matches);
   border-radius:16px;
   overflow:hidden;
-  border: 2px solid var(--cardBorder);    /* borde blanco ligero */
+  border: 2px solid var(--cardBorder); /* borde blanco ligero */
   box-shadow: var(--shadow);
 }
 
@@ -230,10 +156,12 @@ table{
   border-collapse:collapse;
   font-size:.92rem;
 }
+
 td{
   padding:10px 6px;
   vertical-align:middle;
 }
+
 tbody tr:nth-child(odd){background:var(--rowA)}
 tbody tr:nth-child(even){background:var(--rowB)}
 tbody tr{ border-top: 1px solid var(--rowBorder); }
@@ -258,8 +186,6 @@ tbody tr{ border-top: 1px solid var(--rowBorder); }
   background:transparent;
   transition: background .14s ease, color .14s ease, transform .09s ease, box-shadow .14s ease;
 }
-
-/* Seleccionada: relleno azul y letra blanca + pulse */
 .pick input:checked + span{
   background:var(--pickDark);
   color:#ffffff;
@@ -286,8 +212,6 @@ tbody tr{ border-top: 1px solid var(--rowBorder); }
   font-size:.82rem;
   color:var(--text);
 }
-[data-theme="dark"] .team{ color: var(--text); }
-
 .team img{
   width:26px;
   height:26px;
@@ -303,14 +227,23 @@ tbody tr{ border-top: 1px solid var(--rowBorder); }
   gap:10px;
   flex-wrap:wrap;
 }
+
+/* status existe para errores/éxito, pero NO mostramos “selecciona…” */
 .status{
   font-size:.88rem;
   font-weight:800;
   color:var(--muted);
+  min-height: 1.2em; /* reserva espacio */
 }
 .status.error{color:var(--danger)}
 .status.success{color:#166534}
-.actions{display:flex;gap:10px;margin-left:auto}
+
+.actions{
+  display:flex;
+  gap:10px;
+  margin-left:auto;
+}
+
 button{
   border:none;
   border-radius:999px;
@@ -324,10 +257,6 @@ button{
   background:#ffffff;
   color:var(--pickDark);
 }
-[data-theme="dark"] .btn-clear{
-  background:#e8eefc;
-  color:#22325a;
-}
 .btn-send{
   background:var(--pickDark);
   color:#ffffff;
@@ -335,27 +264,22 @@ button{
 
 /* Responsive */
 @media (max-width: 390px){
-  .banner{height:175px}
+  .banner{height:185px}
   td{padding:9px 5px}
   .pick span{width:34px;height:30px}
   .team{font-size:.78rem}
   .team img{width:24px;height:24px}
+  button{padding:10px 14px}
 }
-
 </style>
 </head>
 
 <body>
-<div class="app" id="app">
+<div class="app">
 
   <div class="banner">
     <div class="banner-inner">
       <div class="jornada-pill" id="jornada-pill">JORNADA</div>
-
-      <label class="theme-toggle" title="Modo oscuro">
-        Oscuro
-        <input id="themeSwitch" type="checkbox" />
-      </label>
     </div>
   </div>
 
@@ -363,13 +287,10 @@ button{
 
     <div class="inputs">
       <div class="field">
-        <div class="label">TELÉFONO</div>
-        <input id="telefono" class="inline-input" type="tel" placeholder="Ej: 3312345678" />
+        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono" />
       </div>
-
       <div class="field">
-        <div class="label">NOMBRE</div>
-        <input id="nombre" class="inline-input" type="text" placeholder="Ej: Osvaldo" />
+        <input id="nombre" class="inline-input" type="text" placeholder="Nombre" />
       </div>
     </div>
 
@@ -380,7 +301,7 @@ button{
     </div>
 
     <div class="footer">
-      <div id="status" class="status">Cargando quiniela…</div>
+      <div id="status" class="status"></div>
       <div class="actions">
         <button class="btn-clear" onclick="limpiar()">Limpiar</button>
         <button class="btn-send" onclick="enviar()">Enviar</button>
@@ -395,28 +316,7 @@ const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JH
 const tbody=document.getElementById("tbody");
 const statusEl=document.getElementById("status");
 const jornadaPill=document.getElementById("jornada-pill");
-const app=document.getElementById("app");
-const themeSwitch=document.getElementById("themeSwitch");
 
-// ===== Theme (persistente) =====
-(function initTheme(){
-  const saved = localStorage.getItem("qlm_theme");
-  if(saved === "dark"){
-    app.setAttribute("data-theme","dark");
-    themeSwitch.checked = true;
-  }
-  themeSwitch.addEventListener("change", ()=>{
-    if(themeSwitch.checked){
-      app.setAttribute("data-theme","dark");
-      localStorage.setItem("qlm_theme","dark");
-    } else {
-      app.removeAttribute("data-theme");
-      localStorage.setItem("qlm_theme","light");
-    }
-  });
-})();
-
-// ===== Logos =====
 function logo(team){
   let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .toLowerCase().replace(/[^a-z0-9]/g,"");
@@ -425,13 +325,10 @@ function logo(team){
   return "assets/"+s+".png";
 }
 
-// Extrae "Jornada 1" -> "JORNADA 1"
 function formatJornada(sub){
   if(!sub) return "JORNADA";
-  // busca número
   const m = String(sub).match(/(\d+)/);
   if(m) return "JORNADA " + m[1];
-  // si no, úsalo tal cual en mayúsculas
   return String(sub).toUpperCase();
 }
 
@@ -441,7 +338,6 @@ async function cargar(){
     const d=await r.json();
     if(!d.ok) throw new Error(d.message || "No se pudo cargar");
 
-    // Banner: SOLO jornada
     jornadaPill.textContent = formatJornada(d.subtitulo);
 
     tbody.innerHTML="";
@@ -449,38 +345,35 @@ async function cargar(){
       tbody.innerHTML+=`
       <tr data-local="${p.local}" data-visita="${p.visita}">
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label></td>
-
         <td class="teamCell">
           <div class="team">
             <img src="${logo(p.local)}" onerror="this.style.display='none'">
             <div>${p.local}</div>
           </div>
         </td>
-
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label></td>
-
         <td class="teamCell">
           <div class="team">
             <img src="${logo(p.visita)}" onerror="this.style.display='none'">
             <div>${p.visita}</div>
           </div>
         </td>
-
         <td class="pick"><label><input type="radio" name="p${p.numero}" value="V"><span>V</span></label></td>
       </tr>`;
     });
 
-    statusEl.textContent="Selecciona tus pronósticos";
-    statusEl.className="status";
+    // NO mostramos “selecciona…”
+    statusEl.textContent = "";
+    statusEl.className = "status";
   }catch(e){
-    statusEl.textContent=e.message || "Error al cargar";
-    statusEl.className="status error";
+    statusEl.textContent = e.message || "Error al cargar";
+    statusEl.className = "status error";
   }
 }
 
 function limpiar(){
   document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
-  statusEl.textContent="Listo.";
+  statusEl.textContent="";
   statusEl.className="status";
 }
 
@@ -510,7 +403,7 @@ async function enviar(){
     const d=JSON.parse(await r.text());
     if(!d.ok) throw new Error(d.message || "Error al registrar");
 
-    statusEl.textContent="Quiniela enviada";
+    statusEl.textContent="Enviada";
     statusEl.className="status success";
     window.open(d.whatsappUrl,"_blank");
   }catch(e){
