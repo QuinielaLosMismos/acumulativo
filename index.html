@@ -1,275 +1,339 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Quiniela Los Mismos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
-      --blue:#1b1bb3;         /* franja azul (ajústala si quieres más fuerte) */
-      --top:#ffffff;          /* blanco */
-      --bottom:#eeeeee;       /* gris claro */
-      --card:#0b1120;
-      --accent:#22c55e;
-      --accent-soft:rgba(34,197,94,.16);
-      --text:#f9fafb;
-      --muted:rgba(255,255,255,.72);
-      --border:rgba(255,255,255,.18);
-      --danger:#ef4444;
+      --bg: #eeeeee;          /* gris claro */
+      --panel: #e9e9e9;       /* inputs (mismo tono) */
+      --matches: #dcdcdc;     /* área partidos (más oscuro) */
+      --rowA: #d7d7d7;        /* fila impar */
+      --rowB: #cfcfcf;        /* fila par */
+      --blue: #1b1bb3;        /* azul rey */
+      --blue-soft: rgba(27,27,179,.18);
+      --text: #111827;
+      --muted: #4b5563;
+      --white: #ffffff;
+      --danger: #b91c1c;
+      --shadow: 0 8px 18px rgba(2,6,23,.12);
     }
 
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
 
     body{
       margin:0;
       min-height:100vh;
-      /* Fondo como tu imagen: blanco / azul / gris */
-      background: linear-gradient(
-        to bottom,
-        var(--top) 0%,
-        var(--top) 34%,
-        var(--blue) 34%,
-        var(--blue) 52%,
-        var(--bottom) 52%,
-        var(--bottom) 100%
-      );
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Layout full-screen */
+    .app{
+      min-height: 100vh;
       display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:14px;
-      color:var(--text);
+      flex-direction:column;
     }
 
-    .wrapper{width:100%;max-width:440px}
-
-    .card{
-      border-radius:18px;
-      overflow:hidden;
-      border:1px solid rgba(2,6,23,.25);
-      box-shadow:0 18px 42px rgba(2,6,23,.35);
-      background:rgba(11,17,32,.92);
-      backdrop-filter: blur(6px);
-    }
-
-    /* Banner / Logo */
+    /* Banner crowd */
     .banner{
       position:relative;
-      padding:16px 14px 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
-      border-bottom:1px solid rgba(255,255,255,.10);
-      text-align:center;
+      padding: 14px 14px 12px;
+      background: linear-gradient(180deg, #f3f3f3 0%, #e8e8e8 100%);
+      box-shadow: var(--shadow);
+      border-bottom: 2px solid var(--blue);
       overflow:hidden;
     }
 
-    /* Silueta suave de porra (SVG como background) */
+    /* SVG crowd as background */
     .banner::before{
       content:"";
       position:absolute;
-      inset:-10px -10px -30px -10px;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 400'%3E%3Cg fill='%23ffffff' fill-opacity='0.10'%3E%3Cpath d='M70 310c30-42 86-58 136-30 16-55 70-92 128-76 30-44 90-62 142-30 34-36 90-46 140-12 42-42 108-44 156-6 52-30 120-22 160 18 44-26 106-26 150 16v130H70z'/%3E%3Cpath d='M110 250c18-18 40-26 64-24 8-28 34-50 66-52 10-26 38-44 72-44 32 0 58 14 74 36 18-12 42-18 68-14 28 4 52 20 64 44 22-18 52-26 84-20 30 6 56 26 66 54 18-10 42-12 62-4 26 10 44 34 44 64H110z'/%3E%3Ccircle cx='200' cy='180' r='22'/%3E%3Ccircle cx='320' cy='160' r='20'/%3E%3Ccircle cx='460' cy='170' r='22'/%3E%3Ccircle cx='620' cy='155' r='20'/%3E%3Ccircle cx='760' cy='170' r='22'/%3E%3Ccircle cx='930' cy='160' r='20'/%3E%3Ccircle cx='1040' cy='185' r='22'/%3E%3C/g%3E%3C/svg%3E");
-      background-size:cover;
-      background-repeat:no-repeat;
-      background-position:center bottom;
+      inset:0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 260'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231b1bb3' stop-opacity='0.16'/%3E%3Cstop offset='1' stop-color='%23111827' stop-opacity='0.05'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1400' height='260' fill='url(%23g)'/%3E%3Cg fill='%231b1bb3' fill-opacity='0.22'%3E%3Cpath d='M0 210c60-35 135-55 220-30 25-55 90-85 160-72 50-50 150-60 220-10 70-55 175-65 250-15 70-45 170-45 230 0 60-35 120-30 320 25v162H0z'/%3E%3C/g%3E%3Cg fill='%23000000' fill-opacity='0.14'%3E%3Cpath d='M70 220c22-32 60-48 105-42 10-30 40-52 80-56 12-24 38-40 70-40 28 0 52 10 68 26 18-10 40-12 62-6 26 6 44 22 54 44 20-14 46-18 74-10 28 10 44 34 44 64H70z'/%3E%3Ccircle cx='230' cy='122' r='18'/%3E%3Ccircle cx='350' cy='110' r='17'/%3E%3Ccircle cx='520' cy='118' r='18'/%3E%3Ccircle cx='690' cy='105' r='17'/%3E%3Ccircle cx='850' cy='118' r='18'/%3E%3Ccircle cx='1010' cy='110' r='17'/%3E%3Ccircle cx='1160' cy='122' r='18'/%3E%3C/g%3E%3Cg fill='%23000000' fill-opacity='0.20'%3E%3Cpath d='M0 260h1400v-70c-40-24-72-32-120-18-46-40-110-42-160-10-40-40-110-48-160-18-48-38-114-36-156 6-50-34-106-24-140 12-52-32-112-14-146 22-50-32-112-24-152 12-54-32-128-16-170 18C196 156 120 170 0 208v52z'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       pointer-events:none;
-      opacity:1;
+    }
+
+    .banner-inner{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      align-items:center;
+      text-align:center;
     }
 
     .title{
-      position:relative;
-      z-index:1;
-      font-weight:900;
-      letter-spacing:.16em;
-      text-transform:uppercase;
-      font-size:1.12rem;
-      line-height:1.1;
-      text-shadow:0 8px 28px rgba(0,0,0,.35);
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-size: 1.1rem;
+      color: #111827;
     }
-    .title .a{color:#ffffff}
-    .title .b{color:var(--accent)}
+    .title span{
+      color: var(--blue);
+    }
 
     .subtitle{
-      position:relative;
-      z-index:1;
-      font-size:.82rem;
-      font-weight:650;
-      margin-top:6px;
-      color:#ffffff;
-      opacity:.95;
+      font-size: .9rem;
+      font-weight: 700;
+      color: #111827;
+      opacity: .92;
     }
+
     .cierre{
-      position:relative;
-      z-index:1;
-      font-size:.74rem;
-      margin-top:2px;
-      color:var(--muted);
+      font-size: .82rem;
+      color: #111827;
+      opacity: .70;
+      font-weight: 600;
     }
 
+    /* Content fills rest of screen */
     .content{
-      padding:12px 14px 12px;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      padding: 10px 10px 12px;
+      gap:10px;
     }
 
-    .inputs{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+    /* Inputs section */
+    .inputs{
+      background: var(--panel);
+      border: 2px solid var(--blue);
+      border-radius: 16px;
+      padding: 10px;
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
 
-    .input-box{
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(2,6,23,.35);
-      padding:8px 12px 6px;
+    .field{
+      background: transparent;
+      border: 2px solid var(--blue);
+      border-radius: 14px;
+      padding: 8px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
     }
-    .input-label{
-      font-size:.7rem;
-      color:rgba(255,255,255,.70);
-      text-transform:uppercase;
-      letter-spacing:.10em;
-      margin-bottom:3px;
+
+    .label{
+      font-size: .72rem;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
     }
+
     input{
-      width:100%;
       border:none;
+      background: transparent;
       outline:none;
-      background:transparent;
-      color:var(--text);
-      font-size:.9rem;
+      font-size: 1rem;
+      color: var(--text);
       padding:0;
     }
 
-    .table-wrapper{
-      border-radius:16px;
+    /* Matches section */
+    .matches{
+      flex:1;
+      background: var(--matches);
+      border-radius: 16px;
+      border: 2px solid rgba(27,27,179,.35);
+      box-shadow: var(--shadow);
       overflow:hidden;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(2,6,23,.30);
+      display:flex;
+      flex-direction:column;
+      min-height: 280px;
     }
 
-    table{width:100%;border-collapse:collapse;font-size:.8rem}
+    /* Make sure it’s “complete” on phones: keep within viewport, scroll inside matches only */
+    .matches-scroll{
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      flex:1;
+    }
 
-    tbody tr{border-top:1px solid rgba(255,255,255,.08)}
-    tbody tr:hover{background:rgba(27,27,179,.22)}
-    td{padding:8px 6px;vertical-align:middle}
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
 
-    .num{width:22px;text-align:center;font-weight:700;color:rgba(255,255,255,.85)}
+    td{
+      padding: 10px 8px;
+      vertical-align: middle;
+    }
+
+    tbody tr:nth-child(odd){ background: var(--rowA); }
+    tbody tr:nth-child(even){ background: var(--rowB); }
+
+    .num{
+      width: 26px;
+      text-align:center;
+      font-weight: 900;
+      color: #111827;
+      opacity: .85;
+    }
 
     .team{
       display:flex;
       align-items:center;
-      gap:6px;
-      text-transform:uppercase;
-      font-weight:750;
-      letter-spacing:.02em;
-      font-size:.72rem;
-      color:#ffffff;
+      gap:8px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color:#111827;
+      font-size: .86rem;
     }
 
     /* Escudos SIN círculo */
     .team img{
-      width:22px;
-      height:22px;
-      object-fit:contain;
-      border-radius:0;
-      border:none;
-      background:transparent;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,.20));
     }
 
-    .pick{text-align:center;width:36px}
+    .pick{
+      width: 44px;
+      text-align:center;
+    }
 
-    .pick label{position:relative;display:inline-block}
-    .pick input{position:absolute;opacity:0}
+    .pick label{ position:relative; display:inline-block; }
+    .pick input{ position:absolute; opacity:0; }
 
     .pick span{
       display:inline-flex;
-      width:30px;height:28px;
       align-items:center;
       justify-content:center;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,.22);
-      background:rgba(2,6,23,.55);
-      font-weight:900;
-      cursor:pointer;
-      transition:transform .08s ease, box-shadow .12s ease, background .12s ease;
-      color:#ffffff;
+      width: 38px;
+      height: 34px;
+      border-radius: 12px;
+      border: 2px solid var(--blue);
+      color: var(--blue);
+      font-weight: 1000;
+      background: transparent;
+      transition: background .12s ease, color .12s ease, transform .08s ease, box-shadow .12s ease;
+      user-select:none;
     }
-    .pick input:checked+span{
-      border-color:rgba(34,197,94,.85);
-      background:var(--accent-soft);
-      box-shadow:0 0 0 2px rgba(34,197,94,.25);
+
+    .pick input:checked + span{
+      background: var(--blue);
+      color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(27,27,179,.18);
       transform: translateY(-1px);
-      color:#bbf7d0;
     }
 
+    /* Footer */
     .footer{
-      margin-top:10px;
       display:flex;
-      justify-content:space-between;
       align-items:center;
-      gap:8px;
+      justify-content:space-between;
+      gap:10px;
       flex-wrap:wrap;
+      padding-top: 4px;
     }
 
-    .status{font-size:.72rem;color:rgba(255,255,255,.70)}
-    .status.error{color:var(--danger)}
-    .status.success{color:var(--accent)}
+    .status{
+      font-size:.88rem;
+      font-weight: 800;
+      color: #111827;
+      opacity:.85;
+    }
+    .status.error{ color: var(--danger); opacity: 1; }
+    .status.success{ color: #166534; opacity: 1; }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      margin-left:auto;
+    }
 
     button{
       border:none;
-      border-radius:999px;
-      padding:8px 16px;
-      font-size:.8rem;
-      font-weight:750;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: .95rem;
+      font-weight: 900;
       cursor:pointer;
+      box-shadow: var(--shadow);
     }
+
     .btn-clear{
-      background:rgba(255,255,255,.08);
-      color:rgba(255,255,255,.82);
-      border:1px solid rgba(255,255,255,.16);
+      background: #f3f4f6;
+      border: 2px solid var(--blue);
+      color: var(--blue);
     }
+
     .btn-send{
-      background:linear-gradient(135deg,#22c55e,#4ade80);
-      color:#022c22;
-      box-shadow:0 12px 24px rgba(34,197,94,.35);
+      background: var(--blue);
+      color: #ffffff;
+      border: 2px solid var(--blue);
+    }
+
+    /* Small phones */
+    @media (max-width: 380px){
+      .team{ font-size: .80rem; }
+      .pick span{ width: 36px; height: 32px; }
+      td{ padding: 9px 6px; }
+      button{ padding: 9px 14px; font-size: .9rem; }
     }
   </style>
 </head>
 
 <body>
-<div class="wrapper">
-  <div class="card">
+  <div class="app">
 
     <div class="banner">
-      <div class="title"><span class="a">QUINIELA</span> <span class="b">LOS MISMOS</span></div>
-      <div id="subtitulo" class="subtitle"></div>
-      <div id="cierre" class="cierre"></div>
+      <div class="banner-inner">
+        <div class="title">QUINIELA <span>LOS MISMOS</span></div>
+        <div id="subtitulo" class="subtitle"></div>
+        <div id="cierre" class="cierre"></div>
+      </div>
     </div>
 
     <div class="content">
+
       <div class="inputs">
-        <div class="input-box">
-          <div class="input-label">Teléfono *</div>
+        <div class="field">
+          <div class="label">Teléfono *</div>
           <input id="telefono" type="tel" placeholder="10 dígitos o con lada">
         </div>
-        <div class="input-box">
-          <div class="input-label">Nombre</div>
+        <div class="field">
+          <div class="label">Nombre</div>
           <input id="nombre" type="text" placeholder="Nombre">
         </div>
       </div>
 
-      <div class="table-wrapper">
-        <table>
-          <tbody id="tbody"></tbody>
-        </table>
+      <div class="matches">
+        <div class="matches-scroll">
+          <table>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="footer">
         <div id="status" class="status">Cargando quiniela…</div>
-        <div>
+        <div class="actions">
           <button class="btn-clear" onclick="limpiar()">Limpiar</button>
           <button class="btn-send" onclick="enviar()">Enviar</button>
         </div>
       </div>
-    </div>
 
+    </div>
   </div>
-</div>
 
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
@@ -277,7 +341,7 @@
   const tbody = document.getElementById("tbody");
   const statusEl = document.getElementById("status");
 
-  // Nombre -> archivo: "CRUZ AZUL" => cruzazul.png / "SAN LUIS" => sanluis.png
+  // Nombre -> archivo: "CRUZ AZUL" => cruzazul.png / "SAN LUIS" => sanluis.png / resto: solo letras y números
   function logo(team){
     let s = (team || "")
       .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
@@ -366,7 +430,7 @@
         });
       }
 
-      const r = await fetch(SCRIPT_URL,{
+      const r = await fetch(SCRIPT_URL, {
         method:"POST",
         headers:{"Content-Type":"text/plain;charset=utf-8"},
         body:JSON.stringify({telefono,nombre,partidos})
