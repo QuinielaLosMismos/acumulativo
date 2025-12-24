@@ -6,222 +6,187 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
-      --bg: #eeeeee;          /* gris claro */
-      --panel: #e9e9e9;       /* inputs (mismo tono) */
-      --matches: #dcdcdc;     /* área partidos (más oscuro) */
-      --rowA: #d7d7d7;        /* fila impar */
-      --rowB: #cfcfcf;        /* fila par */
-      --blue: #1b1bb3;        /* azul rey */
-      --blue-soft: rgba(27,27,179,.18);
-      --text: #111827;
-      --muted: #4b5563;
-      --white: #ffffff;
-      --danger: #b91c1c;
-      --shadow: 0 8px 18px rgba(2,6,23,.12);
+      --bg:#eeeeee;            /* fondo general gris claro */
+      --panel:#e6e6e6;         /* mismo gris para inputs */
+      --matches:#d9d9d9;       /* área partidos */
+      --rowA:#d6d6d6;          /* fila impar */
+      --rowB:#cfcfcf;          /* fila par */
+      --pickBorder:#555555;    /* borde casilla gris oscuro */
+      --pickFill:#4f4f4f;      /* relleno al seleccionar */
+      --text:#111827;
+      --muted:#4b5563;
+      --white:#ffffff;
+      --danger:#b91c1c;
+
+      /* Tipografía/paddings adaptativos para que quepa sin scroll */
+      --fs: clamp(11px, 2.35vw, 14px);
+      --padY: clamp(6px, 1.6vh, 10px);
+      --padX: clamp(6px, 2.2vw, 10px);
     }
 
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
+    *{ box-sizing:border-box; font-family:system-ui,-apple-system,Segoe UI,sans-serif; }
 
     body{
       margin:0;
       min-height:100vh;
-      background: var(--bg);
-      color: var(--text);
+      background:var(--bg);
+      color:var(--text);
     }
 
-    /* Layout full-screen */
+    /* App full screen */
     .app{
-      min-height: 100vh;
+      min-height:100vh;
       display:flex;
       flex-direction:column;
     }
 
-    /* Banner crowd */
+    /* Banner tipo crowd (muy parecido) */
     .banner{
       position:relative;
-      padding: 14px 14px 12px;
-      background: linear-gradient(180deg, #f3f3f3 0%, #e8e8e8 100%);
-      box-shadow: var(--shadow);
-      border-bottom: 2px solid var(--blue);
+      padding: 12px 12px 10px;
+      border-bottom: 2px solid rgba(0,0,0,.18);
+      background: linear-gradient(180deg, #f2f2f2 0%, #e7e7e7 100%);
       overflow:hidden;
     }
 
-    /* SVG crowd as background */
+    /* Crowd silhouette + banderas + tambor (SVG) */
     .banner::before{
       content:"";
       position:absolute;
       inset:0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 260'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231b1bb3' stop-opacity='0.16'/%3E%3Cstop offset='1' stop-color='%23111827' stop-opacity='0.05'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1400' height='260' fill='url(%23g)'/%3E%3Cg fill='%231b1bb3' fill-opacity='0.22'%3E%3Cpath d='M0 210c60-35 135-55 220-30 25-55 90-85 160-72 50-50 150-60 220-10 70-55 175-65 250-15 70-45 170-45 230 0 60-35 120-30 320 25v162H0z'/%3E%3C/g%3E%3Cg fill='%23000000' fill-opacity='0.14'%3E%3Cpath d='M70 220c22-32 60-48 105-42 10-30 40-52 80-56 12-24 38-40 70-40 28 0 52 10 68 26 18-10 40-12 62-6 26 6 44 22 54 44 20-14 46-18 74-10 28 10 44 34 44 64H70z'/%3E%3Ccircle cx='230' cy='122' r='18'/%3E%3Ccircle cx='350' cy='110' r='17'/%3E%3Ccircle cx='520' cy='118' r='18'/%3E%3Ccircle cx='690' cy='105' r='17'/%3E%3Ccircle cx='850' cy='118' r='18'/%3E%3Ccircle cx='1010' cy='110' r='17'/%3E%3Ccircle cx='1160' cy='122' r='18'/%3E%3C/g%3E%3Cg fill='%23000000' fill-opacity='0.20'%3E%3Cpath d='M0 260h1400v-70c-40-24-72-32-120-18-46-40-110-42-160-10-40-40-110-48-160-18-48-38-114-36-156 6-50-34-106-24-140 12-52-32-112-14-146 22-50-32-112-24-152 12-54-32-128-16-170 18C196 156 120 170 0 208v52z'/%3E%3C/g%3E%3C/svg%3E");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 240'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231b1bb3' stop-opacity='0.10'/%3E%3Cstop offset='1' stop-color='%23000000' stop-opacity='0.03'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='240' fill='url(%23sky)'/%3E%3C!-- crowd silhouettes --%3E%3Cg fill='%23000000' fill-opacity='0.20'%3E%3Cpath d='M0 240V140c40-22 70-18 98 4 18-18 40-26 64-22 10-24 34-40 60-38 12-20 34-30 58-26 18-16 44-14 64 4 22-14 48-14 72 4 14-10 36-10 54 0 22-18 56-16 78 6 20-18 54-16 76 6 18-18 52-18 72 0 20-14 54-10 74 14 20-16 54-14 76 6 22-14 52-12 74 10 18-18 54-18 74 0 22-16 56-14 78 6 18-14 46-10 62 10 26-16 58-14 84 10 18-14 44-10 60 10 22-18 56-18 78 0 22-16 56-14 78 6 28-18 66-14 92 12V240H0z'/%3E%3C/g%3E%3C!-- flags/scarves/drum details --%3E%3Cg fill='%23000000' fill-opacity='0.22'%3E%3Cpath d='M125 72l18 8 14-16 18 8-6 14-14-6-14 16-18-8z'/%3E%3Cpath d='M260 56h6v48h-6z'/%3E%3Cpath d='M266 56c28 2 46 10 58 22-16 8-34 10-58 6z'/%3E%3Cpath d='M420 64h6v58h-6z'/%3E%3Cpath d='M426 64c22 6 38 16 50 28-14 6-30 6-50 0z'/%3E%3Cpath d='M720 58h6v62h-6z'/%3E%3Cpath d='M726 58c26 6 44 18 58 34-18 8-36 8-58 0z'/%3E%3Cpath d='M950 70h6v52h-6z'/%3E%3Cpath d='M956 70c22 4 38 14 50 28-14 6-30 6-50 0z'/%3E%3C!-- drum --%3E%3Crect x='570' y='132' width='44' height='28' rx='6'/%3E%3Crect x='574' y='136' width='36' height='20' rx='5' fill-opacity='0.12'/%3E%3Cpath d='M560 126l18 10' stroke='%23000000' stroke-opacity='0.22' stroke-width='4'/%3E%3Cpath d='M622 126l-18 10' stroke='%23000000' stroke-opacity='0.22' stroke-width='4'/%3E%3C/g%3E%3C/svg%3E");
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
       pointer-events:none;
     }
 
     .banner-inner{
       position:relative;
       z-index:1;
+      text-align:center;
       display:flex;
       flex-direction:column;
-      gap:4px;
+      gap:2px;
       align-items:center;
-      text-align:center;
     }
 
     .title{
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      font-size: 1.1rem;
-      color: #111827;
-    }
-    .title span{
-      color: var(--blue);
+      font-weight: 950;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      font-size: clamp(14px, 4vw, 18px);
+      color:#111827;
     }
 
     .subtitle{
-      font-size: .9rem;
-      font-weight: 700;
-      color: #111827;
-      opacity: .92;
+      font-size: clamp(12px, 3.2vw, 15px);
+      font-weight: 800;
+      color:#111827;
+      opacity:.92;
     }
 
     .cierre{
-      font-size: .82rem;
-      color: #111827;
-      opacity: .70;
-      font-weight: 600;
+      font-size: clamp(11px, 3vw, 14px);
+      font-weight: 650;
+      color:#111827;
+      opacity:.70;
     }
 
-    /* Content fills rest of screen */
+    /* Content full height */
     .content{
       flex:1;
       display:flex;
       flex-direction:column;
-      padding: 10px 10px 12px;
+      padding: 10px 10px 10px;
       gap:10px;
     }
 
-    /* Inputs section */
+    /* Inputs (sin contenedor grande, mismos grises) */
     .inputs{
-      background: var(--panel);
-      border: 2px solid var(--blue);
-      border-radius: 16px;
-      padding: 10px;
-      box-shadow: var(--shadow);
       display:flex;
       flex-direction:column;
       gap:8px;
+      background: transparent;
     }
 
     .field{
-      background: transparent;
-      border: 2px solid var(--blue);
+      background: var(--panel);
+      border: 1px solid rgba(0,0,0,.18);
       border-radius: 14px;
-      padding: 8px 10px;
-      display:flex;
-      flex-direction:column;
-      gap:4px;
+      padding: 8px 10px 6px;
     }
 
     .label{
-      font-size: .72rem;
-      letter-spacing: .10em;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing:.10em;
       text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 800;
+      color: rgba(17,24,39,.75);
+      margin-bottom: 4px;
     }
 
     input{
+      width:100%;
       border:none;
-      background: transparent;
       outline:none;
-      font-size: 1rem;
+      background: transparent;
+      font-size: 16px; /* para que no haga zoom raro en iPhone */
       color: var(--text);
       padding:0;
     }
 
-    /* Matches section */
+    /* Matches (SIN scroll) */
     .matches{
       flex:1;
       background: var(--matches);
       border-radius: 16px;
-      border: 2px solid rgba(27,27,179,.35);
-      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,.18);
       overflow:hidden;
       display:flex;
       flex-direction:column;
-      min-height: 280px;
-    }
-
-    /* Make sure it’s “complete” on phones: keep within viewport, scroll inside matches only */
-    .matches-scroll{
-      overflow:auto;
-      -webkit-overflow-scrolling: touch;
-      flex:1;
     }
 
     table{
       width:100%;
-      border-collapse: collapse;
-      font-size: .9rem;
+      border-collapse:collapse;
+      font-size: var(--fs);
     }
 
     td{
-      padding: 10px 8px;
-      vertical-align: middle;
+      padding: var(--padY) var(--padX);
+      vertical-align:middle;
     }
 
     tbody tr:nth-child(odd){ background: var(--rowA); }
     tbody tr:nth-child(even){ background: var(--rowB); }
 
     .num{
-      width: 26px;
+      width: 24px;
       text-align:center;
-      font-weight: 900;
-      color: #111827;
-      opacity: .85;
-    }
-
-    .team{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .03em;
+      font-weight: 950;
       color:#111827;
-      font-size: .86rem;
-    }
-
-    /* Escudos SIN círculo */
-    .team img{
-      width: 26px;
-      height: 26px;
-      object-fit: contain;
-      border: none;
-      border-radius: 0;
-      background: transparent;
-      filter: drop-shadow(0 1px 3px rgba(0,0,0,.20));
+      opacity:.82;
     }
 
     .pick{
-      width: 44px;
+      width: 40px;
       text-align:center;
     }
 
     .pick label{ position:relative; display:inline-block; }
     .pick input{ position:absolute; opacity:0; }
 
+    /* Casillas en gris oscuro (sin azul) */
     .pick span{
       display:inline-flex;
+      width: 36px;
+      height: 32px;
       align-items:center;
       justify-content:center;
-      width: 38px;
-      height: 34px;
       border-radius: 12px;
-      border: 2px solid var(--blue);
-      color: var(--blue);
+      border: 2px solid var(--pickBorder);
+      color: var(--pickBorder);
       font-weight: 1000;
       background: transparent;
       transition: background .12s ease, color .12s ease, transform .08s ease, box-shadow .12s ease;
@@ -229,10 +194,44 @@
     }
 
     .pick input:checked + span{
-      background: var(--blue);
-      color: #ffffff;
-      box-shadow: 0 0 0 3px rgba(27,27,179,.18);
+      background: var(--pickFill);
+      color: var(--white);
+      box-shadow: 0 0 0 3px rgba(79,79,79,.18);
       transform: translateY(-1px);
+    }
+
+    /* Equipo: escudo ARRIBA del nombre */
+    .teamCell{
+      text-align:center;
+      width: 33%;
+    }
+
+    .team{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:4px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color:#111827;
+      line-height:1.05;
+      word-break: break-word;
+    }
+
+    .team img{
+      width: clamp(18px, 4vw, 26px);
+      height: clamp(18px, 4vw, 26px);
+      object-fit:contain;
+      border:none;
+      border-radius:0;
+      background:transparent;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.18));
+    }
+
+    .team span{
+      display:block;
+      font-size: clamp(10px, 2.2vw, 13px);
     }
 
     /* Footer */
@@ -242,17 +241,17 @@
       justify-content:space-between;
       gap:10px;
       flex-wrap:wrap;
-      padding-top: 4px;
+      padding-top: 2px;
     }
 
     .status{
-      font-size:.88rem;
-      font-weight: 800;
-      color: #111827;
-      opacity:.85;
+      font-size: clamp(12px, 3.2vw, 14px);
+      font-weight: 850;
+      color:#111827;
+      opacity:.78;
     }
-    .status.error{ color: var(--danger); opacity: 1; }
-    .status.success{ color: #166534; opacity: 1; }
+    .status.error{ color: var(--danger); opacity:1; }
+    .status.success{ color:#166534; opacity:1; }
 
     .actions{
       display:flex;
@@ -262,86 +261,74 @@
 
     button{
       border:none;
-      border-radius: 999px;
-      padding: 10px 18px;
-      font-size: .95rem;
-      font-weight: 900;
+      border-radius:999px;
+      padding: 10px 16px;
+      font-size: 15px;
+      font-weight: 950;
       cursor:pointer;
-      box-shadow: var(--shadow);
-    }
-
-    .btn-clear{
-      background: #f3f4f6;
-      border: 2px solid var(--blue);
-      color: var(--blue);
+      border: 1px solid rgba(0,0,0,.18);
+      background:#f3f3f3;
+      color:#111827;
     }
 
     .btn-send{
-      background: var(--blue);
-      color: #ffffff;
-      border: 2px solid var(--blue);
+      background:#111827;
+      color:#ffffff;
     }
 
-    /* Small phones */
-    @media (max-width: 380px){
-      .team{ font-size: .80rem; }
-      .pick span{ width: 36px; height: 32px; }
-      td{ padding: 9px 6px; }
-      button{ padding: 9px 14px; font-size: .9rem; }
+    /* Ajustes extra para pantallas MUY bajitas */
+    @media (max-height: 700px){
+      .banner{ padding: 10px 10px 8px; }
+      .content{ padding: 8px 8px 8px; gap:8px; }
+      .field{ padding: 7px 9px 6px; }
+      .pick span{ width: 34px; height: 30px; }
     }
   </style>
 </head>
 
 <body>
   <div class="app">
-
     <div class="banner">
       <div class="banner-inner">
-        <div class="title">QUINIELA <span>LOS MISMOS</span></div>
+        <div class="title">QUINIELA LOS MISMOS</div>
         <div id="subtitulo" class="subtitle"></div>
         <div id="cierre" class="cierre"></div>
       </div>
     </div>
 
     <div class="content">
-
       <div class="inputs">
         <div class="field">
-          <div class="label">Teléfono *</div>
-          <input id="telefono" type="tel" placeholder="10 dígitos o con lada">
+          <div class="label">TELÉFONO</div>
+          <input id="telefono" type="tel" placeholder="">
         </div>
         <div class="field">
-          <div class="label">Nombre</div>
-          <input id="nombre" type="text" placeholder="Nombre">
+          <div class="label">NOMBRE</div>
+          <input id="nombre" type="text" placeholder="">
         </div>
       </div>
 
       <div class="matches">
-        <div class="matches-scroll">
-          <table>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
+        <table>
+          <tbody id="tbody"></tbody>
+        </table>
       </div>
 
       <div class="footer">
         <div id="status" class="status">Cargando quiniela…</div>
         <div class="actions">
-          <button class="btn-clear" onclick="limpiar()">Limpiar</button>
+          <button onclick="limpiar()">Limpiar</button>
           <button class="btn-send" onclick="enviar()">Enviar</button>
         </div>
       </div>
-
     </div>
   </div>
 
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
-
   const tbody = document.getElementById("tbody");
   const statusEl = document.getElementById("status");
 
-  // Nombre -> archivo: "CRUZ AZUL" => cruzazul.png / "SAN LUIS" => sanluis.png / resto: solo letras y números
   function logo(team){
     let s = (team || "")
       .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
@@ -357,7 +344,7 @@
     try{
       const r = await fetch(SCRIPT_URL + "?action=getConfig");
       const d = await r.json();
-      if(!d.ok) throw new Error(d.message || "No se pudo cargar configuración");
+      if(!d.ok) throw new Error(d.message || "No se pudo cargar");
 
       document.getElementById("subtitulo").textContent = d.subtitulo || "";
       document.getElementById("cierre").textContent = d.cierre ? ("Cierre: " + d.cierre) : "";
@@ -372,10 +359,10 @@
               <label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label>
             </td>
 
-            <td>
+            <td class="teamCell">
               <div class="team">
                 <img src="${logo(p.local)}" onerror="this.style.display='none'">
-                ${p.local}
+                <span>${p.local}</span>
               </div>
             </td>
 
@@ -383,10 +370,10 @@
               <label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label>
             </td>
 
-            <td>
+            <td class="teamCell">
               <div class="team">
                 <img src="${logo(p.visita)}" onerror="this.style.display='none'">
-                ${p.visita}
+                <span>${p.visita}</span>
               </div>
             </td>
 
@@ -400,7 +387,7 @@
       statusEl.textContent = "Selecciona tus pronósticos";
       statusEl.className = "status";
     }catch(e){
-      statusEl.textContent = e.message || "Error al cargar";
+      statusEl.textContent = e.message || "Error";
       statusEl.className = "status error";
     }
   }
@@ -430,7 +417,7 @@
         });
       }
 
-      const r = await fetch(SCRIPT_URL, {
+      const r = await fetch(SCRIPT_URL,{
         method:"POST",
         headers:{"Content-Type":"text/plain;charset=utf-8"},
         body:JSON.stringify({telefono,nombre,partidos})
