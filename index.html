@@ -1,603 +1,295 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Quiniela Los Mismos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #0b1120;
-      --accent: #22c55e;
-      --accent-soft: rgba(34,197,94,0.14);
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --border: #1f2937;
-      --danger: #f97373;
+      --bg:#020617;
+      --card:#0b1120;
+      --accent:#22c55e;
+      --accent-soft:rgba(34,197,94,.15);
+      --text:#f9fafb;
+      --muted:#9ca3af;
+      --border:#1f2937;
+      --danger:#ef4444;
     }
 
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:radial-gradient(circle at top,#1f2937 0,#020617 55%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      color:var(--text);
     }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-      color: var(--text);
+    .wrapper{width:100%;max-width:420px}
+
+    .card{
+      background:var(--card);
+      border-radius:18px;
+      border:1px solid rgba(148,163,184,.35);
+      box-shadow:0 16px 40px rgba(15,23,42,.85);
+      padding:14px 14px 12px;
     }
 
-    .wrapper {
-      width: 100%;
-      max-width: 430px;
+    .header{text-align:center;margin-bottom:10px}
+
+    .title{
+      font-size:1.15rem;
+      font-weight:800;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+    }
+    .title span:last-child{color:var(--accent)}
+
+    .subtitle{font-size:.8rem;font-weight:600;margin-top:2px}
+    .cierre{font-size:.72rem;color:var(--muted);margin-top:2px}
+
+    .inputs{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+
+    .input-box{
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,.6);
+      background:rgba(15,23,42,.9);
+      padding:6px 10px 4px;
     }
 
-    .card {
-      position: relative;
-      background: var(--card);
-      border-radius: 18px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.8);
-      overflow: hidden;
+    .input-label{
+      font-size:.7rem;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
     }
 
-    /* Fondo tipo porra / tribuna */
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 0%, rgba(56,189,248,0.28) 0, transparent 55%),
-        radial-gradient(circle at 80% 0%, rgba(34,197,94,0.24) 0, transparent 52%),
-        radial-gradient(circle at 50% 100%, rgba(15,23,42,0.85) 0, #020617 62%);
-      opacity: 0.7;
-      pointer-events: none;
+    input{
+      border:none;
+      background:transparent;
+      width:100%;
+      font-size:.85rem;
+      color:var(--text);
+      outline:none;
     }
 
-    .card::after {
-      content: "";
-      position: absolute;
-      inset: 55% 0 0;
-      background-image:
-        radial-gradient(circle at 10% 110%, rgba(15,23,42,0.4) 0, transparent 45%),
-        radial-gradient(circle at 40% 115%, rgba(15,23,42,0.7) 0, transparent 55%),
-        radial-gradient(circle at 70% 115%, rgba(15,23,42,0.6) 0, transparent 55%),
-        radial-gradient(circle at 95% 110%, rgba(15,23,42,0.4) 0, transparent 40%);
-      opacity: 0.9;
-      pointer-events: none;
+    .table-wrapper{
+      margin-top:10px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,.45);
+      background:rgba(15,23,42,.95);
+      overflow:hidden;
     }
 
-    .card-inner {
-      position: relative;
-      z-index: 1;
-      padding: 14px 14px 10px;
+    table{width:100%;border-collapse:collapse;font-size:.78rem}
+
+    tbody tr{border-top:1px solid rgba(15,23,42,.9)}
+    tbody tr:hover{background:rgba(30,64,175,.45)}
+
+    td{padding:7px 6px}
+
+    .num{width:22px;text-align:center;font-weight:600}
+    .team{
+      display:flex;
+      align-items:center;
+      gap:4px;
+      text-transform:uppercase;
+      font-weight:600;
+      font-size:.7rem;
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 10px;
+    .team img{
+      width:20px;height:20px;
+      border-radius:50%;
+      border:1px solid rgba(148,163,184,.6);
+      background:#020617;
     }
 
-    .title-main {
-      font-size: 1.12rem;
-      font-weight: 800;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
+    .pick{text-align:center;width:34px}
+
+    .pick label{position:relative}
+
+    .pick input{position:absolute;opacity:0}
+
+    .pick span{
+      display:inline-flex;
+      width:30px;height:26px;
+      align-items:center;
+      justify-content:center;
+      border-radius:8px;
+      border:1px solid #4b5563;
+      background:#020617;
+      font-weight:700;
+      cursor:pointer;
     }
 
-    .title-main span:nth-child(1) { color: #e5e7eb; }
-    .title-main span:nth-child(2) { color: var(--accent); }
-
-    .subtitle {
-      font-size: 0.8rem;
-      color: #e5e7eb;
-      margin-top: 2px;
-      font-weight: 600;
+    .pick input:checked+span{
+      border-color:var(--accent);
+      background:var(--accent-soft);
+      color:#bbf7d0;
+      box-shadow:0 0 0 1px rgba(34,197,94,.4);
     }
 
-    .info-line {
-      font-size: 0.72rem;
-      color: var(--muted);
-      margin-top: 2px;
-      line-height: 1.2;
+    .footer{
+      margin-top:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
     }
 
-    .inputs {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .status{font-size:.7rem;color:var(--muted)}
+    .status.error{color:var(--danger)}
+    .status.success{color:var(--accent)}
+
+    button{
+      border:none;
+      border-radius:999px;
+      padding:7px 14px;
+      font-size:.78rem;
+      font-weight:600;
+      cursor:pointer;
     }
 
-    .input-group {
-      border-radius: 12px;
-      border: 1px solid rgba(148,163,184,0.7);
-      background: rgba(15,23,42,0.85);
-      padding: 6px 10px 4px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+    .btn-clear{
+      background:rgba(15,23,42,.9);
+      color:var(--muted);
+      border:1px solid rgba(148,163,184,.6);
     }
 
-    .input-label {
-      font-size: 0.7rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    input[type="tel"],
-    input[type="text"] {
-      border: none;
-      background: transparent;
-      font-size: 0.85rem;
-      padding: 0;
-      outline: none;
-      color: var(--text);
-    }
-
-    input::placeholder {
-      color: #6b7280;
-    }
-
-    .table-wrapper {
-      margin-top: 10px;
-      border-radius: 14px;
-      border: 1px solid rgba(148,163,184,0.6);
-      background: rgba(15,23,42,0.92);
-      max-height: 440px;
-      overflow-y: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.78rem;
-    }
-
-    th, td {
-      padding: 7px 6px;
-    }
-
-    th {
-      font-size: 0.63rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      border-bottom: 1px solid rgba(30,64,175,0.4);
-      background: rgba(15,23,42,0.96);
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .col-num {
-      width: 24px;
-      text-align: center;
-      font-weight: 600;
-      color: #e5e7eb;
-    }
-
-    .col-team {
-      width: 98px;
-    }
-
-    .col-team .team {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .team-logo {
-      width: 20px;
-      height: 20px;
-      object-fit: contain;
-      border-radius: 999px;
-      background: #020617;
-      border: 1px solid rgba(148,163,184,0.7);
-    }
-
-    .team-name {
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: #e5e7eb;
-    }
-
-    .col-pron {
-      width: 34px;
-      text-align: center;
-    }
-
-    tbody tr {
-      border-top: 1px solid rgba(15,23,42,0.9);
-    }
-
-    tbody tr:nth-child(odd) {
-      background: rgba(15,23,42,0.96);
-    }
-
-    tbody tr:nth-child(even) {
-      background: rgba(15,23,42,0.9);
-    }
-
-    tbody tr:hover {
-      background: rgba(30,64,175,0.55);
-    }
-
-    .pill-radio {
-      position: relative;
-      display: inline-block;
-    }
-
-    .pill-radio input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .pill-radio span {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 30px;
-      height: 26px;
-      border-radius: 9px;
-      border: 1px solid #4b5563;
-      background: #020617;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: #e5e7eb;
-      cursor: pointer;
-      transition: all 0.12s ease;
-      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.8);
-    }
-
-    .pill-radio input:checked + span {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: #bbf7d0;
-      box-shadow: 0 0 0 1px rgba(34,197,94,0.45);
-    }
-
-    .footer {
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .status {
-      font-size: 0.7rem;
-      color: var(--muted);
-    }
-
-    .status.error {
-      color: var(--danger);
-    }
-
-    .status.success {
-      color: var(--accent);
-    }
-
-    .actions {
-      display: flex;
-      gap: 6px;
-    }
-
-    button {
-      border-radius: 999px;
-      border: none;
-      padding: 7px 14px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-      white-space: nowrap;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #22c55e, #4ade80);
-      color: #022c22;
-      box-shadow: 0 10px 22px rgba(34,197,94,0.5);
-    }
-
-    .btn-primary:active {
-      transform: translateY(1px) scale(0.99);
-      box-shadow: 0 4px 10px rgba(34,197,94,0.5);
-    }
-
-    .btn-ghost {
-      background: rgba(15,23,42,0.9);
-      color: var(--muted);
-      border: 1px solid rgba(148,163,184,0.6);
-    }
-
-    .btn-ghost:active {
-      transform: translateY(1px) scale(0.99);
-    }
-
-    .btn-primary[disabled] {
-      opacity: 0.7;
-      box-shadow: none;
-      cursor: default;
-      transform: none;
-    }
-
-    @media (max-width: 480px) {
-      .wrapper {
-        max-width: 390px;
-      }
-      .card-inner {
-        padding: 12px 10px 9px;
-      }
-      .team-name {
-        font-size: 0.66rem;
-      }
-      .pill-radio span {
-        width: 28px;
-        height: 24px;
-      }
+    .btn-send{
+      background:linear-gradient(135deg,#22c55e,#4ade80);
+      color:#022c22;
+      box-shadow:0 10px 22px rgba(34,197,94,.5);
     }
   </style>
 </head>
+
 <body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="card-inner">
-        <div class="header">
-          <div class="title-main">
-            <span>QUINIELA</span> <span>LOS MISMOS</span>
-          </div>
-          <div id="subtitulo" class="subtitle">Jornada</div>
-          <div id="info-cierre" class="info-line"></div>
-        </div>
+<div class="wrapper">
+  <div class="card">
 
-        <div class="inputs">
-          <div class="input-group">
-            <div class="input-label">Teléfono *</div>
-            <input id="input-telefono" type="tel" placeholder="10 dígitos o con lada" />
-          </div>
-          <div class="input-group">
-            <div class="input-label">Nombre</div>
-            <input id="input-nombre" type="text" placeholder="Nombre" />
-          </div>
-        </div>
+    <div class="header">
+      <div class="title">QUINIELA <span>LOS MISMOS</span></div>
+      <div id="subtitulo" class="subtitle"></div>
+      <div id="cierre" class="cierre"></div>
+    </div>
 
-        <div class="table-wrapper">
-          <table>
-            
-            <tbody id="tbody-partidos"></tbody>
-          </table>
-        </div>
-
-        <div class="footer">
-          <div id="status" class="status">Cargando quiniela...</div>
-          <div class="actions">
-            <button type="button" class="btn-ghost" id="btn-limpiar">Limpiar</button>
-            <button type="button" class="btn-primary" id="btn-enviar">Enviar</button>
-          </div>
-        </div>
+    <div class="inputs">
+      <div class="input-box">
+        <div class="input-label">Teléfono *</div>
+        <input id="telefono" type="tel">
+      </div>
+      <div class="input-box">
+        <div class="input-label">Nombre</div>
+        <input id="nombre" type="text">
       </div>
     </div>
+
+    <div class="table-wrapper">
+      <table>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <div id="status" class="status">Cargando quiniela…</div>
+      <div>
+        <button class="btn-clear" onclick="limpiar()">Limpiar</button>
+        <button class="btn-send" onclick="enviar()">Enviar</button>
+      </div>
+    </div>
+
   </div>
+</div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
 
-    const subtituloEl = document.getElementById('subtitulo');
-    const infoCierreEl = document.getElementById('info-cierre');
-    const thLocal = document.getElementById('th-local');
-    const thVisita = document.getElementById('th-visita');
-    const tbody = document.getElementById('tbody-partidos');
-    const statusEl = document.getElementById('status');
-    const btnEnviar = document.getElementById('btn-enviar');
-    const btnLimpiar = document.getElementById('btn-limpiar');
-    const inputNombre = document.getElementById('input-nombre');
-    const inputTelefono = document.getElementById('input-telefono');
+const tbody = document.getElementById("tbody");
+const statusEl = document.getElementById("status");
 
-    let partidosGlobal = [];
+function logo(team){
+  let s = team.normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase().replace(/[^a-z0-9]/g,"");
+  if(s==="cruzazul") return "assets/cruzazul.png";
+  if(s==="sanluis") return "assets/sanluis.png";
+  return "assets/"+s+".png";
+}
 
-    // Convierte nombre de equipo a nombre de archivo
-    function getLogoUrl(nombre) {
-      if (!nombre) return "";
-      let slug = nombre
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // sin acentos
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, "") // sin símbolos
-        .trim()
-        .replace(/\s+/g, "-");
+async function cargar(){
+  try{
+    const r = await fetch(SCRIPT_URL+"?action=getConfig");
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.message);
 
-      // Excepciones que pediste
-      if (slug === "cruz-azul") slug = "cruzazul";
-      if (slug === "san-luis") slug = "sanluis";
+    document.getElementById("subtitulo").textContent=d.subtitulo||"";
+    document.getElementById("cierre").textContent=d.cierre?("Cierre: "+d.cierre):"";
 
-      return "assets/" + slug + ".png";
-    }
-
-    async function cargarConfig() {
-      try {
-        statusEl.textContent = "Cargando quiniela...";
-        statusEl.className = "status";
-
-        const res = await fetch(SCRIPT_URL, {
-  method: "POST",
-  headers: { "Content-Type": "text/plain;charset=utf-8" },
-  body: JSON.stringify(payload),
-  redirect: "follow"
-});
-
-        const data = await res.json();
-        if (!data.ok) {
-          throw new Error(data.message || "No se pudo obtener la configuración");
-        }
-
-        if (data.subtitulo) subtituloEl.textContent = data.subtitulo;
-        if (data.cierre) infoCierreEl.textContent = "Cierre: " + data.cierre;
-        else infoCierreEl.textContent = "";
-
-        partidosGlobal = data.partidos || [];
-        renderPartidos(partidosGlobal);
-
-        statusEl.textContent = partidosGlobal.length
-          ? "Selecciona un pronóstico por partido y envía tu quiniela."
-          : "No hay partidos configurados en la hoja CONFIG.";
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "Error al cargar la quiniela.";
-        statusEl.className = "status error";
-      }
-    }
-
-    function renderPartidos(partidos) {
-      tbody.innerHTML = "";
-
-      partidos.forEach((p) => {
-        const tr = document.createElement("tr");
-        tr.dataset.local = p.local;
-        tr.dataset.visita = p.visita;
-
-        const localLogo = getLogoUrl(p.local);
-        const visitaLogo = getLogoUrl(p.visita);
-
-        tr.innerHTML = `
-          <td class="col-num">${p.numero}</td>
-
-          <td class="col-pron">
-            <label class="pill-radio">
-              <input type="radio" name="p_${p.numero}" value="L">
-              <span>L</span>
-            </label>
-          </td>
-
-          <td class="col-team">
-            <div class="team">
-              <img src="${localLogo}" class="team-logo" onerror="this.style.display='none'">
-              <span class="team-name">${p.local || ""}</span>
-            </div>
-          </td>
-
-          <td class="col-pron">
-            <label class="pill-radio">
-              <input type="radio" name="p_${p.numero}" value="E">
-              <span>E</span>
-            </label>
-          </td>
-
-          <td class="col-team">
-            <div class="team">
-              <img src="${visitaLogo}" class="team-logo" onerror="this.style.display='none'">
-              <span class="team-name">${p.visita || ""}</span>
-            </div>
-          </td>
-
-          <td class="col-pron">
-            <label class="pill-radio">
-              <input type="radio" name="p_${p.numero}" value="V">
-              <span>V</span>
-            </label>
-          </td>
-        `;
-
-        tbody.appendChild(tr);
-      });
-    }
-
-    function limpiarSeleccion() {
-      const radios = tbody.querySelectorAll('input[type="radio"]');
-      radios.forEach(r => r.checked = false);
-      statusEl.textContent = "Selección limpiada. Marca de nuevo tus pronósticos.";
-      statusEl.className = "status";
-    }
-
-    async function enviarQuiniela() {
-  try {
-    statusEl.className = "status";
-    statusEl.textContent = "";
-
-    const telefono = (inputTelefono.value || "").trim();
-    const nombre = (inputNombre.value || "").trim();
-
-    if (!telefono) {
-      statusEl.textContent = "Ingresa un teléfono.";
-      statusEl.className = "status error";
-      return;
-    }
-
-    const filas = tbody.querySelectorAll("tr");
-    const partidos = [];
-    let faltan = 0;
-
-    filas.forEach(tr => {
-      const local = tr.dataset.local || "";
-      const visita = tr.dataset.visita || "";
-      const checked = tr.querySelector('input[type="radio"]:checked');
-      const pronostico = checked ? checked.value : "";
-
-      if (!pronostico) faltan++;
-      partidos.push({ local, visita, pronostico });
+    tbody.innerHTML="";
+    d.partidos.forEach(p=>{
+      tbody.innerHTML+=`
+      <tr data-local="${p.local}" data-visita="${p.visita}">
+        <td class="num">${p.numero}</td>
+        <td class="pick"><label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label></td>
+        <td><div class="team"><img src="${logo(p.local)}" onerror="this.style.display='none'">${p.local}</div></td>
+        <td class="pick"><label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label></td>
+        <td><div class="team"><img src="${logo(p.visita)}" onerror="this.style.display='none'">${p.visita}</div></td>
+        <td class="pick"><label><input type="radio" name="p${p.numero}" value="V"><span>V</span></label></td>
+      </tr>`;
     });
 
-    if (partidos.length === 0) {
-      statusEl.textContent = "No hay partidos para enviar.";
-      statusEl.className = "status error";
-      return;
-    }
-
-    if (faltan > 0) {
-      statusEl.textContent = "Te falta seleccionar pronóstico en " + faltan + " partido(s).";
-      statusEl.className = "status error";
-      return;
-    }
-
-    btnEnviar.disabled = true;
-    statusEl.textContent = "Enviando quiniela...";
-
-    const payload = { nombre, telefono, partidos };
-
-    const res = await fetch(SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      redirect: "follow"
-    });
-
-    const raw = await res.text();
-let data = JSON.parse(raw);
-
-if (!data.ok) throw new Error(data.message || "Error al registrar la quiniela");
-
-    statusEl.textContent = "Quiniela registrada correctamente.";
-    statusEl.className = "status success";
-
-    if (data.whatsappUrl) {
-      window.open(data.whatsappUrl, "_blank");
-    }
-
-  } catch (err) {
-    console.error(err);
-    statusEl.textContent = err.message || "Error al enviar la quiniela.";
-    statusEl.className = "status error";
-  } finally {
-    btnEnviar.disabled = false;
+    statusEl.textContent="Selecciona tus pronósticos";
+  }catch(e){
+    statusEl.textContent=e.message;
+    statusEl.className="status error";
   }
 }
 
-    btnLimpiar.addEventListener("click", limpiarSeleccion);
-    btnEnviar.addEventListener("click", enviarQuiniela);
+function limpiar(){
+  document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
+}
 
-    cargarConfig();
-  </script>
+async function enviar(){
+  try{
+    const telefono=document.getElementById("telefono").value.trim();
+    const nombre=document.getElementById("nombre").value.trim();
+    if(!telefono) throw new Error("Ingresa teléfono");
+
+    const filas=[...tbody.querySelectorAll("tr")];
+    const partidos=[];
+    filas.forEach(f=>{
+      const sel=f.querySelector("input:checked");
+      if(!sel) throw new Error("Faltan selecciones");
+      partidos.push({local:f.dataset.local,visita:f.dataset.visita,pronostico:sel.value});
+    });
+
+    const r=await fetch(SCRIPT_URL,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({telefono,nombre,partidos})
+    });
+
+    const d=JSON.parse(await r.text());
+    if(!d.ok) throw new Error(d.message);
+
+    statusEl.textContent="Quiniela enviada correctamente";
+    statusEl.className="status success";
+    window.open(d.whatsappUrl,"_blank");
+
+  }catch(e){
+    statusEl.textContent=e.message;
+    statusEl.className="status error";
+  }
+}
+
+cargar();
+</script>
 </body>
 </html>
