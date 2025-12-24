@@ -7,271 +7,269 @@
 
   <style>
     :root{
-      --blue:#0b1bb8;      /* azul fuerte (franja) */
-      --blue-2:#0a138a;    /* azul profundo (sombras) */
-      --card:#0b1120;      /* cupón */
-      --text:#f9fafb;
-      --muted:#cbd5e1;
-      --line:rgba(255,255,255,.14);
+      --blue:#1b1bb3;         /* franja azul (ajústala si quieres más fuerte) */
+      --top:#ffffff;          /* blanco */
+      --bottom:#eeeeee;       /* gris claro */
+      --card:#0b1120;
       --accent:#22c55e;
+      --accent-soft:rgba(34,197,94,.16);
+      --text:#f9fafb;
+      --muted:rgba(255,255,255,.72);
+      --border:rgba(255,255,255,.18);
       --danger:#ef4444;
     }
 
     *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
 
-    /* Fondo con tonos como tu imagen */
     body{
       margin:0;
       min-height:100vh;
+      /* Fondo como tu imagen: blanco / azul / gris */
+      background: linear-gradient(
+        to bottom,
+        var(--top) 0%,
+        var(--top) 34%,
+        var(--blue) 34%,
+        var(--blue) 52%,
+        var(--bottom) 52%,
+        var(--bottom) 100%
+      );
       display:flex;
       align-items:center;
       justify-content:center;
       padding:14px;
       color:var(--text);
-
-      background:
-        linear-gradient(to bottom,
-          #f6f7fb 0%,
-          #eef0f7 38%,
-          var(--blue) 38%,
-          var(--blue) 48%,
-          #eef0f7 48%,
-          #f6f7fb 100%);
     }
 
-    .wrapper{width:100%;max-width:430px}
+    .wrapper{width:100%;max-width:440px}
 
     .card{
-      position:relative;
       border-radius:18px;
       overflow:hidden;
-      box-shadow:0 16px 40px rgba(2,6,23,.35);
-      border:1px solid rgba(2,6,23,.10);
-      background: var(--card);
+      border:1px solid rgba(2,6,23,.25);
+      box-shadow:0 18px 42px rgba(2,6,23,.35);
+      background:rgba(11,17,32,.92);
+      backdrop-filter: blur(6px);
     }
 
-    /* Silueta suave de porra detrás del cupón (SVG embebido) */
-    .card::before{
+    /* Banner / Logo */
+    .banner{
+      position:relative;
+      padding:16px 14px 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
+      border-bottom:1px solid rgba(255,255,255,.10);
+      text-align:center;
+      overflow:hidden;
+    }
+
+    /* Silueta suave de porra (SVG como background) */
+    .banner::before{
       content:"";
       position:absolute;
-      inset:0;
-      background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 500'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff' stop-opacity='0.10'/%3E%3Cstop offset='1' stop-color='%23000000' stop-opacity='0.18'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23g)' d='M0,340 C80,310 140,340 220,310 C280,290 320,330 380,310 C430,296 480,322 540,305 C610,285 650,330 720,310 C790,290 840,320 900,300 L900,500 L0,500 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M55,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M140,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M230,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M320,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M410,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M500,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M590,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M680,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3Cpath fill='%23000000' fill-opacity='0.18' d='M770,360 c10,-30 40,-40 60,-10 c8,12 6,30 0,40 c-10,18 -50,15 -60,-30 Z'/%3E%3C/svg%3E");
-      background-size: cover;
-      background-position: center bottom;
-      opacity: .45;            /* “suave” */
+      inset:-10px -10px -30px -10px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 400'%3E%3Cg fill='%23ffffff' fill-opacity='0.10'%3E%3Cpath d='M70 310c30-42 86-58 136-30 16-55 70-92 128-76 30-44 90-62 142-30 34-36 90-46 140-12 42-42 108-44 156-6 52-30 120-22 160 18 44-26 106-26 150 16v130H70z'/%3E%3Cpath d='M110 250c18-18 40-26 64-24 8-28 34-50 66-52 10-26 38-44 72-44 32 0 58 14 74 36 18-12 42-18 68-14 28 4 52 20 64 44 22-18 52-26 84-20 30 6 56 26 66 54 18-10 42-12 62-4 26 10 44 34 44 64H110z'/%3E%3Ccircle cx='200' cy='180' r='22'/%3E%3Ccircle cx='320' cy='160' r='20'/%3E%3Ccircle cx='460' cy='170' r='22'/%3E%3Ccircle cx='620' cy='155' r='20'/%3E%3Ccircle cx='760' cy='170' r='22'/%3E%3Ccircle cx='930' cy='160' r='20'/%3E%3Ccircle cx='1040' cy='185' r='22'/%3E%3C/g%3E%3C/svg%3E");
+      background-size:cover;
+      background-repeat:no-repeat;
+      background-position:center bottom;
       pointer-events:none;
+      opacity:1;
     }
 
-    .inner{
+    .title{
       position:relative;
       z-index:1;
-      padding:0;
-    }
-
-    /* Banner / logo */
-    .banner{
-      padding:14px 14px 12px;
-      background:
-        radial-gradient(circle at 20% 0%, rgba(255,255,255,.20) 0, transparent 55%),
-        radial-gradient(circle at 80% 0%, rgba(255,255,255,.14) 0, transparent 55%),
-        linear-gradient(180deg, rgba(2,6,23,.35), rgba(2,6,23,.05));
-      border-bottom:1px solid var(--line);
-      text-align:center;
-    }
-
-    .banner-title{
       font-weight:900;
-      letter-spacing:.18em;
+      letter-spacing:.16em;
       text-transform:uppercase;
-      font-size:1.08rem;
+      font-size:1.12rem;
       line-height:1.1;
+      text-shadow:0 8px 28px rgba(0,0,0,.35);
     }
+    .title .a{color:#ffffff}
+    .title .b{color:var(--accent)}
 
-    .banner-title span{
-      color: var(--accent);
-    }
-
-    .banner-sub{
-      margin-top:4px;
+    .subtitle{
+      position:relative;
+      z-index:1;
       font-size:.82rem;
-      font-weight:700;
-      color: var(--text);
+      font-weight:650;
+      margin-top:6px;
+      color:#ffffff;
       opacity:.95;
     }
-
-    .banner-info{
+    .cierre{
+      position:relative;
+      z-index:1;
+      font-size:.74rem;
       margin-top:2px;
-      font-size:.72rem;
-      color: var(--muted);
+      color:var(--muted);
     }
 
-    /* Inputs */
-    .content{ padding:12px 14px 12px; }
+    .content{
+      padding:12px 14px 12px;
+    }
 
     .inputs{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
 
     .input-box{
-      border-radius:12px;
-      border:1px solid var(--line);
-      background: rgba(2,6,23,.35);
-      padding:8px 10px 6px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(2,6,23,.35);
+      padding:8px 12px 6px;
     }
     .input-label{
-      font-size:.68rem;
-      color:var(--muted);
+      font-size:.7rem;
+      color:rgba(255,255,255,.70);
       text-transform:uppercase;
       letter-spacing:.10em;
+      margin-bottom:3px;
     }
     input{
-      border:none;background:transparent;width:100%;
-      outline:none;color:var(--text);
-      font-size:.86rem;font-weight:650;
-      padding-top:3px;
+      width:100%;
+      border:none;
+      outline:none;
+      background:transparent;
+      color:var(--text);
+      font-size:.9rem;
+      padding:0;
     }
 
-    /* Tabla / cupón */
-    .table-wrap{
-      border-radius:14px;
-      border:1px solid var(--line);
-      background: rgba(2,6,23,.45);
+    .table-wrapper{
+      border-radius:16px;
       overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(2,6,23,.30);
     }
 
-    table{width:100%;border-collapse:collapse;font-size:.80rem}
-    td{padding:8px 6px}
+    table{width:100%;border-collapse:collapse;font-size:.8rem}
 
-    tbody tr{border-top:1px solid rgba(255,255,255,.07)}
-    tbody tr:hover{background: rgba(11,27,184,.18)}
+    tbody tr{border-top:1px solid rgba(255,255,255,.08)}
+    tbody tr:hover{background:rgba(27,27,179,.22)}
+    td{padding:8px 6px;vertical-align:middle}
 
-    .num{width:22px;text-align:center;font-weight:800;color:#e5e7eb}
+    .num{width:22px;text-align:center;font-weight:700;color:rgba(255,255,255,.85)}
 
     .team{
       display:flex;
       align-items:center;
       gap:6px;
       text-transform:uppercase;
-      font-weight:800;
+      font-weight:750;
       letter-spacing:.02em;
       font-size:.72rem;
-      color:#f1f5f9;
+      color:#ffffff;
     }
 
     /* Escudos SIN círculo */
     .team img{
-      width:22px;height:22px;
+      width:22px;
+      height:22px;
       object-fit:contain;
       border-radius:0;
       border:none;
       background:transparent;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
     }
 
     .pick{text-align:center;width:36px}
+
     .pick label{position:relative;display:inline-block}
     .pick input{position:absolute;opacity:0}
 
     .pick span{
       display:inline-flex;
-      width:32px;height:28px;
-      align-items:center;justify-content:center;
+      width:30px;height:28px;
+      align-items:center;
+      justify-content:center;
       border-radius:10px;
       border:1px solid rgba(255,255,255,.22);
-      background: rgba(2,6,23,.55);
+      background:rgba(2,6,23,.55);
       font-weight:900;
       cursor:pointer;
-      transition: transform .10s ease, box-shadow .10s ease, border-color .10s ease;
+      transition:transform .08s ease, box-shadow .12s ease, background .12s ease;
+      color:#ffffff;
     }
-
-    .pick input:checked + span{
-      border-color: rgba(34,197,94,.9);
-      box-shadow: 0 0 0 2px rgba(34,197,94,.25);
+    .pick input:checked+span{
+      border-color:rgba(34,197,94,.85);
+      background:var(--accent-soft);
+      box-shadow:0 0 0 2px rgba(34,197,94,.25);
       transform: translateY(-1px);
+      color:#bbf7d0;
     }
 
-    /* Footer */
     .footer{
       margin-top:10px;
       display:flex;
-      align-items:center;
       justify-content:space-between;
+      align-items:center;
       gap:8px;
       flex-wrap:wrap;
     }
 
-    .status{font-size:.72rem;color:var(--muted)}
+    .status{font-size:.72rem;color:rgba(255,255,255,.70)}
     .status.error{color:var(--danger)}
     .status.success{color:var(--accent)}
 
     button{
-      border:none;border-radius:999px;
-      padding:8px 15px;
-      font-size:.80rem;
-      font-weight:800;
+      border:none;
+      border-radius:999px;
+      padding:8px 16px;
+      font-size:.8rem;
+      font-weight:750;
       cursor:pointer;
     }
-
     .btn-clear{
-      background: rgba(2,6,23,.45);
-      color: var(--muted);
-      border:1px solid var(--line);
+      background:rgba(255,255,255,.08);
+      color:rgba(255,255,255,.82);
+      border:1px solid rgba(255,255,255,.16);
     }
-
     .btn-send{
-      background: linear-gradient(135deg, #22c55e, #4ade80);
-      color: #022c22;
-      box-shadow:0 10px 22px rgba(34,197,94,.45);
-    }
-
-    @media (max-width: 430px){
-      .wrapper{max-width:390px}
-      .team{font-size:.70rem}
-      .pick span{width:30px;height:26px}
+      background:linear-gradient(135deg,#22c55e,#4ade80);
+      color:#022c22;
+      box-shadow:0 12px 24px rgba(34,197,94,.35);
     }
   </style>
 </head>
 
 <body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="inner">
+<div class="wrapper">
+  <div class="card">
 
-        <div class="banner">
-          <div class="banner-title">QUINIELA <span>LOS MISMOS</span></div>
-          <div id="subtitulo" class="banner-sub"></div>
-          <div id="cierre" class="banner-info"></div>
+    <div class="banner">
+      <div class="title"><span class="a">QUINIELA</span> <span class="b">LOS MISMOS</span></div>
+      <div id="subtitulo" class="subtitle"></div>
+      <div id="cierre" class="cierre"></div>
+    </div>
+
+    <div class="content">
+      <div class="inputs">
+        <div class="input-box">
+          <div class="input-label">Teléfono *</div>
+          <input id="telefono" type="tel" placeholder="10 dígitos o con lada">
         </div>
-
-        <div class="content">
-          <div class="inputs">
-            <div class="input-box">
-              <div class="input-label">Teléfono *</div>
-              <input id="telefono" type="tel" placeholder="10 dígitos o con lada">
-            </div>
-            <div class="input-box">
-              <div class="input-label">Nombre</div>
-              <input id="nombre" type="text" placeholder="Nombre">
-            </div>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <tbody id="tbody"></tbody>
-            </table>
-          </div>
-
-          <div class="footer">
-            <div id="status" class="status">Cargando quiniela…</div>
-            <div>
-              <button class="btn-clear" onclick="limpiar()">Limpiar</button>
-              <button class="btn-send" onclick="enviar()">Enviar</button>
-            </div>
-          </div>
+        <div class="input-box">
+          <div class="input-label">Nombre</div>
+          <input id="nombre" type="text" placeholder="Nombre">
         </div>
+      </div>
 
+      <div class="table-wrapper">
+        <table>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="footer">
+        <div id="status" class="status">Cargando quiniela…</div>
+        <div>
+          <button class="btn-clear" onclick="limpiar()">Limpiar</button>
+          <button class="btn-send" onclick="enviar()">Enviar</button>
+        </div>
       </div>
     </div>
+
   </div>
+</div>
 
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
@@ -279,34 +277,35 @@
   const tbody = document.getElementById("tbody");
   const statusEl = document.getElementById("status");
 
+  // Nombre -> archivo: "CRUZ AZUL" => cruzazul.png / "SAN LUIS" => sanluis.png
   function logo(team){
-    let s = team.normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .toLowerCase().replace(/[^a-z0-9]/g,"");
-    if(s==="cruzazul") return "assets/cruzazul.png";
-    if(s==="sanluis") return "assets/sanluis.png";
-    return "assets/"+s+".png";
+    let s = (team || "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g,"");
+
+    if(s === "cruzazul") return "assets/cruzazul.png";
+    if(s === "sanluis") return "assets/sanluis.png";
+    return "assets/" + s + ".png";
   }
 
   async function cargar(){
     try{
-      const r = await fetch(SCRIPT_URL+"?action=getConfig");
+      const r = await fetch(SCRIPT_URL + "?action=getConfig");
       const d = await r.json();
-      if(!d.ok) throw new Error(d.message || "No se pudo obtener la quiniela");
+      if(!d.ok) throw new Error(d.message || "No se pudo cargar configuración");
 
       document.getElementById("subtitulo").textContent = d.subtitulo || "";
-      document.getElementById("cierre").textContent   = d.cierre ? ("Cierre: " + d.cierre) : "";
+      document.getElementById("cierre").textContent = d.cierre ? ("Cierre: " + d.cierre) : "";
 
       tbody.innerHTML = "";
-      d.partidos.forEach(p=>{
+      (d.partidos || []).forEach(p => {
         tbody.innerHTML += `
           <tr data-local="${p.local}" data-visita="${p.visita}">
             <td class="num">${p.numero}</td>
 
             <td class="pick">
-              <label>
-                <input type="radio" name="p${p.numero}" value="L">
-                <span>L</span>
-              </label>
+              <label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label>
             </td>
 
             <td>
@@ -317,10 +316,7 @@
             </td>
 
             <td class="pick">
-              <label>
-                <input type="radio" name="p${p.numero}" value="E">
-                <span>E</span>
-              </label>
+              <label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label>
             </td>
 
             <td>
@@ -331,10 +327,7 @@
             </td>
 
             <td class="pick">
-              <label>
-                <input type="radio" name="p${p.numero}" value="V">
-                <span>V</span>
-              </label>
+              <label><input type="radio" name="p${p.numero}" value="V"><span>V</span></label>
             </td>
           </tr>
         `;
@@ -343,27 +336,27 @@
       statusEl.textContent = "Selecciona tus pronósticos";
       statusEl.className = "status";
     }catch(e){
-      statusEl.textContent = e.message || "Error al cargar la quiniela";
+      statusEl.textContent = e.message || "Error al cargar";
       statusEl.className = "status error";
     }
   }
 
   function limpiar(){
-    document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
-    statusEl.textContent = "Limpio";
+    document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
+    statusEl.textContent = "Listo.";
     statusEl.className = "status";
   }
 
   async function enviar(){
     try{
       const telefono = document.getElementById("telefono").value.trim();
-      const nombre   = document.getElementById("nombre").value.trim();
-
+      const nombre = document.getElementById("nombre").value.trim();
       if(!telefono) throw new Error("Ingresa teléfono");
 
       const filas = [...tbody.querySelectorAll("tr")];
       const partidos = [];
-      filas.forEach(f=>{
+
+      for(const f of filas){
         const sel = f.querySelector("input:checked");
         if(!sel) throw new Error("Faltan selecciones");
         partidos.push({
@@ -371,23 +364,22 @@
           visita: f.dataset.visita,
           pronostico: sel.value
         });
-      });
+      }
 
       const r = await fetch(SCRIPT_URL,{
         method:"POST",
-        headers:{ "Content-Type":"text/plain;charset=utf-8" },
-        body: JSON.stringify({ telefono, nombre, partidos })
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify({telefono,nombre,partidos})
       });
 
       const d = JSON.parse(await r.text());
       if(!d.ok) throw new Error(d.message || "Error al registrar");
 
-      statusEl.textContent = "Enviada ✅";
+      statusEl.textContent = "Quiniela enviada";
       statusEl.className = "status success";
       window.open(d.whatsappUrl, "_blank");
-
     }catch(e){
-      statusEl.textContent = e.message || "Error al enviar";
+      statusEl.textContent = e.message || "Error";
       statusEl.className = "status error";
     }
   }
