@@ -1,441 +1,359 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Quiniela Los Mismos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg:#eeeeee;            /* fondo general gris claro */
-      --panel:#e6e6e6;         /* mismo gris para inputs */
-      --matches:#d9d9d9;       /* área partidos */
-      --rowA:#d6d6d6;          /* fila impar */
-      --rowB:#cfcfcf;          /* fila par */
-      --pickBorder:#555555;    /* borde casilla gris oscuro */
-      --pickFill:#4f4f4f;      /* relleno al seleccionar */
-      --text:#111827;
-      --muted:#4b5563;
-      --white:#ffffff;
-      --danger:#b91c1c;
+<meta charset="UTF-8">
+<title>Quiniela Los Mismos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-      /* Tipografía/paddings adaptativos para que quepa sin scroll */
-      --fs: clamp(11px, 2.35vw, 14px);
-      --padY: clamp(6px, 1.6vh, 10px);
-      --padX: clamp(6px, 2.2vw, 10px);
-    }
+<style>
+:root{
+  --bg:#eaf0fb;          /* azul muy claro fondo */
+  --panel:#e1eaf8;       /* inputs */
+  --matches:#d6e2f5;     /* partidos */
+  --rowA:#dbe6f8;
+  --rowB:#cfdcf2;
+  --pick:#5b79b8;        /* azul medio */
+  --pickDark:#425f9c;    /* azul más fuerte */
+  --text:#0f172a;
+  --muted:#334155;
+  --white:#ffffff;
+  --danger:#b91c1c;
+}
 
-    *{ box-sizing:border-box; font-family:system-ui,-apple-system,Segoe UI,sans-serif; }
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
 
-    body{
-      margin:0;
-      min-height:100vh;
-      background:var(--bg);
-      color:var(--text);
-    }
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+}
 
-    /* App full screen */
-    .app{
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-    }
+.app{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
 
-    /* Banner tipo crowd (muy parecido) */
-    .banner{
-      position:relative;
-      padding: 12px 12px 10px;
-      border-bottom: 2px solid rgba(0,0,0,.18);
-      background: linear-gradient(180deg, #f2f2f2 0%, #e7e7e7 100%);
-      overflow:hidden;
-    }
+/* ===== BANNER ===== */
+.banner{
+  position:relative;
+  height:180px;
+  background:url("assets/banner.png") center/cover no-repeat;
+  display:flex;
+  align-items:flex-end;
+}
 
-    /* Crowd silhouette + banderas + tambor (SVG) */
-    .banner::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 240'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231b1bb3' stop-opacity='0.10'/%3E%3Cstop offset='1' stop-color='%23000000' stop-opacity='0.03'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='240' fill='url(%23sky)'/%3E%3C!-- crowd silhouettes --%3E%3Cg fill='%23000000' fill-opacity='0.20'%3E%3Cpath d='M0 240V140c40-22 70-18 98 4 18-18 40-26 64-22 10-24 34-40 60-38 12-20 34-30 58-26 18-16 44-14 64 4 22-14 48-14 72 4 14-10 36-10 54 0 22-18 56-16 78 6 20-18 54-16 76 6 18-18 52-18 72 0 20-14 54-10 74 14 20-16 54-14 76 6 22-14 52-12 74 10 18-18 54-18 74 0 22-16 56-14 78 6 18-14 46-10 62 10 26-16 58-14 84 10 18-14 44-10 60 10 22-18 56-18 78 0 22-16 56-14 78 6 28-18 66-14 92 12V240H0z'/%3E%3C/g%3E%3C!-- flags/scarves/drum details --%3E%3Cg fill='%23000000' fill-opacity='0.22'%3E%3Cpath d='M125 72l18 8 14-16 18 8-6 14-14-6-14 16-18-8z'/%3E%3Cpath d='M260 56h6v48h-6z'/%3E%3Cpath d='M266 56c28 2 46 10 58 22-16 8-34 10-58 6z'/%3E%3Cpath d='M420 64h6v58h-6z'/%3E%3Cpath d='M426 64c22 6 38 16 50 28-14 6-30 6-50 0z'/%3E%3Cpath d='M720 58h6v62h-6z'/%3E%3Cpath d='M726 58c26 6 44 18 58 34-18 8-36 8-58 0z'/%3E%3Cpath d='M950 70h6v52h-6z'/%3E%3Cpath d='M956 70c22 4 38 14 50 28-14 6-30 6-50 0z'/%3E%3C!-- drum --%3E%3Crect x='570' y='132' width='44' height='28' rx='6'/%3E%3Crect x='574' y='136' width='36' height='20' rx='5' fill-opacity='0.12'/%3E%3Cpath d='M560 126l18 10' stroke='%23000000' stroke-opacity='0.22' stroke-width='4'/%3E%3Cpath d='M622 126l-18 10' stroke='%23000000' stroke-opacity='0.22' stroke-width='4'/%3E%3C/g%3E%3C/svg%3E");
-      background-size:cover;
-      background-position:center;
-      background-repeat:no-repeat;
-      pointer-events:none;
-    }
+.banner::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(0,0,0,.25),
+    rgba(0,0,0,.55)
+  );
+}
 
-    .banner-inner{
-      position:relative;
-      z-index:1;
-      text-align:center;
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-      align-items:center;
-    }
+.banner-inner{
+  position:relative;
+  z-index:1;
+  padding:14px;
+  color:#ffffff;
+}
 
-    .title{
-      font-weight: 950;
-      letter-spacing:.14em;
-      text-transform:uppercase;
-      font-size: clamp(14px, 4vw, 18px);
-      color:#111827;
-    }
+.title{
+  font-size:1.4rem;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
 
-    .subtitle{
-      font-size: clamp(12px, 3.2vw, 15px);
-      font-weight: 800;
-      color:#111827;
-      opacity:.92;
-    }
+.subtitle{
+  font-size:1rem;
+  font-weight:700;
+  opacity:.95;
+}
 
-    .cierre{
-      font-size: clamp(11px, 3vw, 14px);
-      font-weight: 650;
-      color:#111827;
-      opacity:.70;
-    }
+.cierre{
+  font-size:.85rem;
+  opacity:.85;
+}
 
-    /* Content full height */
-    .content{
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      padding: 10px 10px 10px;
-      gap:10px;
-    }
+/* ===== CONTENT ===== */
+.content{
+  flex:1;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
 
-    /* Inputs (sin contenedor grande, mismos grises) */
-    .inputs{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      background: transparent;
-    }
+/* ===== INPUTS ===== */
+.inputs{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
 
-    .field{
-      background: var(--panel);
-      border: 1px solid rgba(0,0,0,.18);
-      border-radius: 14px;
-      padding: 8px 10px 6px;
-    }
+.field{
+  background:var(--panel);
+  border-radius:14px;
+  padding:10px 12px 8px;
+}
 
-    .label{
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing:.10em;
-      text-transform: uppercase;
-      color: rgba(17,24,39,.75);
-      margin-bottom: 4px;
-    }
+.label{
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:.12em;
+  color:var(--muted);
+  margin-bottom:4px;
+}
 
-    input{
-      width:100%;
-      border:none;
-      outline:none;
-      background: transparent;
-      font-size: 16px; /* para que no haga zoom raro en iPhone */
-      color: var(--text);
-      padding:0;
-    }
+input{
+  width:100%;
+  border:none;
+  outline:none;
+  background:transparent;
+  font-size:1rem;
+  color:var(--text);
+}
 
-    /* Matches (SIN scroll) */
-    .matches{
-      flex:1;
-      background: var(--matches);
-      border-radius: 16px;
-      border: 1px solid rgba(0,0,0,.18);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-    }
+/* ===== MATCHES ===== */
+.matches{
+  flex:1;
+  background:var(--matches);
+  border-radius:16px;
+  overflow:hidden;
+}
 
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size: var(--fs);
-    }
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.9rem;
+}
 
-    td{
-      padding: var(--padY) var(--padX);
-      vertical-align:middle;
-    }
+td{
+  padding:10px 6px;
+  vertical-align:middle;
+}
 
-    tbody tr:nth-child(odd){ background: var(--rowA); }
-    tbody tr:nth-child(even){ background: var(--rowB); }
+tbody tr:nth-child(odd){background:var(--rowA)}
+tbody tr:nth-child(even){background:var(--rowB)}
 
-    .num{
-      width: 24px;
-      text-align:center;
-      font-weight: 950;
-      color:#111827;
-      opacity:.82;
-    }
+.pick{
+  width:42px;
+  text-align:center;
+}
 
-    .pick{
-      width: 40px;
-      text-align:center;
-    }
+.pick label{position:relative;display:inline-block}
+.pick input{position:absolute;opacity:0}
 
-    .pick label{ position:relative; display:inline-block; }
-    .pick input{ position:absolute; opacity:0; }
+.pick span{
+  display:inline-flex;
+  width:36px;
+  height:32px;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  border:2px solid var(--pick);
+  color:var(--pick);
+  font-weight:900;
+  background:transparent;
+}
 
-    /* Casillas en gris oscuro (sin azul) */
-    .pick span{
-      display:inline-flex;
-      width: 36px;
-      height: 32px;
-      align-items:center;
-      justify-content:center;
-      border-radius: 12px;
-      border: 2px solid var(--pickBorder);
-      color: var(--pickBorder);
-      font-weight: 1000;
-      background: transparent;
-      transition: background .12s ease, color .12s ease, transform .08s ease, box-shadow .12s ease;
-      user-select:none;
-    }
+.pick input:checked+span{
+  background:var(--pickDark);
+  color:#ffffff;
+}
 
-    .pick input:checked + span{
-      background: var(--pickFill);
-      color: var(--white);
-      box-shadow: 0 0 0 3px rgba(79,79,79,.18);
-      transform: translateY(-1px);
-    }
+/* equipo */
+.teamCell{
+  width:33%;
+  text-align:center;
+}
 
-    /* Equipo: escudo ARRIBA del nombre */
-    .teamCell{
-      text-align:center;
-      width: 33%;
-    }
+.team{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  font-weight:900;
+  text-transform:uppercase;
+  font-size:.8rem;
+}
 
-    .team{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:4px;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: .03em;
-      color:#111827;
-      line-height:1.05;
-      word-break: break-word;
-    }
+.team img{
+  width:26px;
+  height:26px;
+  object-fit:contain;
+}
 
-    .team img{
-      width: clamp(18px, 4vw, 26px);
-      height: clamp(18px, 4vw, 26px);
-      object-fit:contain;
-      border:none;
-      border-radius:0;
-      background:transparent;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,.18));
-    }
+/* ===== FOOTER ===== */
+.footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
 
-    .team span{
-      display:block;
-      font-size: clamp(10px, 2.2vw, 13px);
-    }
+.status{
+  font-size:.85rem;
+  font-weight:700;
+  color:var(--muted);
+}
 
-    /* Footer */
-    .footer{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      padding-top: 2px;
-    }
+.status.error{color:var(--danger)}
+.status.success{color:#166534}
 
-    .status{
-      font-size: clamp(12px, 3.2vw, 14px);
-      font-weight: 850;
-      color:#111827;
-      opacity:.78;
-    }
-    .status.error{ color: var(--danger); opacity:1; }
-    .status.success{ color:#166534; opacity:1; }
+.actions{
+  display:flex;
+  gap:10px;
+}
 
-    .actions{
-      display:flex;
-      gap:8px;
-      margin-left:auto;
-    }
+button{
+  border:none;
+  border-radius:999px;
+  padding:10px 18px;
+  font-size:.9rem;
+  font-weight:900;
+  cursor:pointer;
+}
 
-    button{
-      border:none;
-      border-radius:999px;
-      padding: 10px 16px;
-      font-size: 15px;
-      font-weight: 950;
-      cursor:pointer;
-      border: 1px solid rgba(0,0,0,.18);
-      background:#f3f3f3;
-      color:#111827;
-    }
+.btn-clear{
+  background:#ffffff;
+  color:var(--pickDark);
+}
 
-    .btn-send{
-      background:#111827;
-      color:#ffffff;
-    }
-
-    /* Ajustes extra para pantallas MUY bajitas */
-    @media (max-height: 700px){
-      .banner{ padding: 10px 10px 8px; }
-      .content{ padding: 8px 8px 8px; gap:8px; }
-      .field{ padding: 7px 9px 6px; }
-      .pick span{ width: 34px; height: 30px; }
-    }
-  </style>
+.btn-send{
+  background:var(--pickDark);
+  color:#ffffff;
+}
+</style>
 </head>
 
 <body>
-  <div class="app">
-    <div class="banner">
-      <div class="banner-inner">
-        <div class="title">QUINIELA LOS MISMOS</div>
-        <div id="subtitulo" class="subtitle"></div>
-        <div id="cierre" class="cierre"></div>
-      </div>
-    </div>
+<div class="app">
 
-    <div class="content">
-      <div class="inputs">
-        <div class="field">
-          <div class="label">TELÉFONO</div>
-          <input id="telefono" type="tel" placeholder="">
-        </div>
-        <div class="field">
-          <div class="label">NOMBRE</div>
-          <input id="nombre" type="text" placeholder="">
-        </div>
-      </div>
-
-      <div class="matches">
-        <table>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-
-      <div class="footer">
-        <div id="status" class="status">Cargando quiniela…</div>
-        <div class="actions">
-          <button onclick="limpiar()">Limpiar</button>
-          <button class="btn-send" onclick="enviar()">Enviar</button>
-        </div>
-      </div>
+  <div class="banner">
+    <div class="banner-inner">
+      <div class="title">QUINIELA LOS MISMOS</div>
+      <div id="subtitulo" class="subtitle"></div>
+      <div id="cierre" class="cierre"></div>
     </div>
   </div>
 
+  <div class="content">
+
+    <div class="inputs">
+      <div class="field">
+        <div class="label">TELÉFONO</div>
+        <input id="telefono" type="tel">
+      </div>
+      <div class="field">
+        <div class="label">NOMBRE</div>
+        <input id="nombre" type="text">
+      </div>
+    </div>
+
+    <div class="matches">
+      <table>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <div id="status" class="status">Cargando quiniela…</div>
+      <div class="actions">
+        <button class="btn-clear" onclick="limpiar()">Limpiar</button>
+        <button class="btn-send" onclick="enviar()">Enviar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
-  const tbody = document.getElementById("tbody");
-  const statusEl = document.getElementById("status");
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
+const tbody=document.getElementById("tbody");
+const statusEl=document.getElementById("status");
 
-  function logo(team){
-    let s = (team || "")
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g,"");
+function logo(team){
+  let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase().replace(/[^a-z0-9]/g,"");
+  if(s==="cruzazul") return "assets/cruzazul.png";
+  if(s==="sanluis") return "assets/sanluis.png";
+  return "assets/"+s+".png";
+}
 
-    if(s === "cruzazul") return "assets/cruzazul.png";
-    if(s === "sanluis") return "assets/sanluis.png";
-    return "assets/" + s + ".png";
+async function cargar(){
+  try{
+    const r=await fetch(SCRIPT_URL+"?action=getConfig");
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.message);
+
+    document.getElementById("subtitulo").textContent=d.subtitulo||"";
+    document.getElementById("cierre").textContent=d.cierre?("Cierre: "+d.cierre):"";
+
+    tbody.innerHTML="";
+    d.partidos.forEach(p=>{
+      tbody.innerHTML+=`
+      <tr data-local="${p.local}" data-visita="${p.visita}">
+        <td class="pick"><label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label></td>
+        <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
+        <td class="pick"><label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label></td>
+        <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
+        <td class="pick"><label><input type="radio" name="p${p.numero}" value="V"><span>V</span></label></td>
+      </tr>`;
+    });
+
+    statusEl.textContent="Selecciona tus pronósticos";
+  }catch(e){
+    statusEl.textContent=e.message;
+    statusEl.className="status error";
   }
+}
 
-  async function cargar(){
-    try{
-      const r = await fetch(SCRIPT_URL + "?action=getConfig");
-      const d = await r.json();
-      if(!d.ok) throw new Error(d.message || "No se pudo cargar");
+function limpiar(){
+  document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
+}
 
-      document.getElementById("subtitulo").textContent = d.subtitulo || "";
-      document.getElementById("cierre").textContent = d.cierre ? ("Cierre: " + d.cierre) : "";
+async function enviar(){
+  try{
+    const telefono=document.getElementById("telefono").value.trim();
+    const nombre=document.getElementById("nombre").value.trim();
+    if(!telefono) throw new Error("Ingresa teléfono");
 
-      tbody.innerHTML = "";
-      (d.partidos || []).forEach(p => {
-        tbody.innerHTML += `
-          <tr data-local="${p.local}" data-visita="${p.visita}">
-            <td class="num">${p.numero}</td>
-
-            <td class="pick">
-              <label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label>
-            </td>
-
-            <td class="teamCell">
-              <div class="team">
-                <img src="${logo(p.local)}" onerror="this.style.display='none'">
-                <span>${p.local}</span>
-              </div>
-            </td>
-
-            <td class="pick">
-              <label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label>
-            </td>
-
-            <td class="teamCell">
-              <div class="team">
-                <img src="${logo(p.visita)}" onerror="this.style.display='none'">
-                <span>${p.visita}</span>
-              </div>
-            </td>
-
-            <td class="pick">
-              <label><input type="radio" name="p${p.numero}" value="V"><span>V</span></label>
-            </td>
-          </tr>
-        `;
+    const partidos=[];
+    [...tbody.querySelectorAll("tr")].forEach(tr=>{
+      const sel=tr.querySelector("input:checked");
+      if(!sel) throw new Error("Faltan selecciones");
+      partidos.push({
+        local:tr.dataset.local,
+        visita:tr.dataset.visita,
+        pronostico:sel.value
       });
+    });
 
-      statusEl.textContent = "Selecciona tus pronósticos";
-      statusEl.className = "status";
-    }catch(e){
-      statusEl.textContent = e.message || "Error";
-      statusEl.className = "status error";
-    }
+    const r=await fetch(SCRIPT_URL,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({telefono,nombre,partidos})
+    });
+
+    const d=JSON.parse(await r.text());
+    if(!d.ok) throw new Error(d.message);
+
+    statusEl.textContent="Quiniela enviada";
+    statusEl.className="status success";
+    window.open(d.whatsappUrl,"_blank");
+  }catch(e){
+    statusEl.textContent=e.message;
+    statusEl.className="status error";
   }
+}
 
-  function limpiar(){
-    document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
-    statusEl.textContent = "Listo.";
-    statusEl.className = "status";
-  }
-
-  async function enviar(){
-    try{
-      const telefono = document.getElementById("telefono").value.trim();
-      const nombre = document.getElementById("nombre").value.trim();
-      if(!telefono) throw new Error("Ingresa teléfono");
-
-      const filas = [...tbody.querySelectorAll("tr")];
-      const partidos = [];
-
-      for(const f of filas){
-        const sel = f.querySelector("input:checked");
-        if(!sel) throw new Error("Faltan selecciones");
-        partidos.push({
-          local: f.dataset.local,
-          visita: f.dataset.visita,
-          pronostico: sel.value
-        });
-      }
-
-      const r = await fetch(SCRIPT_URL,{
-        method:"POST",
-        headers:{"Content-Type":"text/plain;charset=utf-8"},
-        body:JSON.stringify({telefono,nombre,partidos})
-      });
-
-      const d = JSON.parse(await r.text());
-      if(!d.ok) throw new Error(d.message || "Error al registrar");
-
-      statusEl.textContent = "Quiniela enviada";
-      statusEl.className = "status success";
-      window.open(d.whatsappUrl, "_blank");
-    }catch(e){
-      statusEl.textContent = e.message || "Error";
-      statusEl.className = "status error";
-    }
-  }
-
-  cargar();
+cargar();
 </script>
 </body>
 </html>
