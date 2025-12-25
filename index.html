@@ -244,12 +244,28 @@ nomInput.addEventListener("input", savePersisted);
 
 /* MENSAJE WHATSAPP */
 function construirMensaje(nombre, telefono, partidos){
-  let msg = "QUINIELA LOS MISMOS\n";
-  msg += `Nombre: ${nombre}\n`;
-  msg += `Teléfono: ${telefono}\n\n`;
+  // Jornada la tomamos del texto que ya viene de CONFIG (si existe)
+  const jornadaTxt = document.getElementById("jornada-pill")
+    ? document.getElementById("jornada-pill").textContent
+    : "JORNADA";
+
+  let msg = "🏆 *QUINIELA LOS MISMOS*\n";
+  msg += `📅 *${jornadaTxt}*\n`;
+  msg += "━━━━━━━━━━━━━━━\n";
+  msg += `👤 *${nombre}*\n\n`;
+
   partidos.forEach((p,i)=>{
-    msg += `${i+1}) ${p.local} vs ${p.visita} → ${p.pronostico}\n`;
+    const simbolo =
+      p.pronostico === "L" ? "🏠" :
+      p.pronostico === "E" ? "🤝" : "✈️";
+
+    msg += `${i+1}. ${p.local} vs ${p.visita}\n`;
+    msg += `   ➜ ${simbolo} *${p.pronostico}*\n`;
   });
+
+  msg += "\n━━━━━━━━━━━━━━━";
+  msg += "\n📩 *Registro enviado*";
+
   return msg.trim();
 }
 
