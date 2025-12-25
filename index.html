@@ -316,11 +316,15 @@ async function enviar(){
     if(!d.ok) throw new Error(d.message);
 
     const mensaje = construirMensaje(nombre, telefono, partidos);
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`;
+
+    // ✅ MÁS CONFIABLE QUE wa.me
+    const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
 
     statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
     statusEl.className="status success";
-    window.open(url,"_blank");
+
+    // ✅ Evita que se pierda el text
+    window.location.href = url;
 
   }catch(e){
     statusEl.textContent=e.message;
