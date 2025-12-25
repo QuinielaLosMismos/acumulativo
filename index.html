@@ -12,12 +12,10 @@
   --rowA:#dbe6f8;
   --rowB:#cfdcf2;
 
-  /* Campos: +10% oscuro adicional */
   --fieldBlue:#b4c6ee;
   --fieldBlue2:#a9bde8;
 
   --text:#0f172a;
-  --white:#ffffff;
   --danger:#b91c1c;
 
   --pick:#5b79b8;
@@ -45,56 +43,8 @@ body{
 
 /* ===== BANNER ===== */
 .banner{
-  position:relative;
   height:210px;
   background:url("assets/banner.png") center top / cover no-repeat;
-  overflow:hidden;
-}
-
-.banner::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to bottom, rgba(0,0,0,.05), rgba(0,0,0,.28));
-}
-
-/* niebla suave */
-.banner::before{
-  content:"";
-  position:absolute;
-  inset:-30px;
-  background:
-    radial-gradient(circle at 20% 45%, rgba(255,255,255,.18) 0, transparent 45%),
-    radial-gradient(circle at 70% 25%, rgba(255,255,255,.14) 0, transparent 50%);
-  filter: blur(6px);
-  opacity:.35;
-  animation: fog 10s ease-in-out infinite alternate;
-  pointer-events:none;
-}
-@keyframes fog{
-  from{ transform: translateX(-3%); }
-  to{ transform: translateX(3%); }
-}
-
-/* Jornada: SIN rotación, más transparente */
-.banner-inner{
-  position:absolute;
-  left:10px;
-  bottom:8px;
-  z-index:2;
-}
-
-.jornada-pill{
-  font-size:.72rem;
-  font-weight:900;
-  letter-spacing:.12em;
-  padding:5px 9px;
-  background:rgba(0,0,0,.20);   /* +30% transparencia */
-  color:rgba(255,255,255,.70);  /* texto más suave */
-  border-radius:6px;
-  border:1px solid rgba(255,255,255,.18);
-  text-transform:uppercase;
-  transform:none;               /* rotación eliminada */
 }
 
 /* ===== CONTENT ===== */
@@ -117,7 +67,7 @@ body{
   background:linear-gradient(180deg, var(--fieldBlue), var(--fieldBlue2));
   border-radius:14px;
   padding:12px;
-  border:2px solid rgba(255,255,255,.85); /* borde blanco visible */
+  border:2px solid rgba(255,255,255,.85);
   box-shadow:var(--shadow);
 }
 
@@ -128,9 +78,6 @@ body{
   background:transparent;
   font-size:1rem;
   color:var(--text);
-}
-.inline-input::placeholder{
-  color:rgba(15,23,42,.45);
 }
 
 /* ===== MATCHES ===== */
@@ -178,8 +125,6 @@ tbody tr{ border-top:1px solid var(--rowBorder); }
 .pick input:checked + span{
   background:var(--pickDark);
   color:#ffffff;
-  box-shadow:0 0 0 4px rgba(95,125,210,.18);
-  transform:translateY(-1px);
 }
 
 .teamCell{
@@ -241,20 +186,16 @@ button{
 <body>
 <div class="app">
 
-  <div class="banner">
-    <div class="banner-inner">
-      <div class="jornada-pill" id="jornada-pill">JORNADA</div>
-    </div>
-  </div>
+  <div class="banner"></div>
 
   <div class="content">
 
     <div class="inputs">
       <div class="field">
-        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono" autocomplete="tel">
+        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono">
       </div>
       <div class="field">
-        <input id="nombre" class="inline-input" type="text" placeholder="Nombre" autocomplete="name">
+        <input id="nombre" class="inline-input" type="text" placeholder="Nombre">
       </div>
     </div>
 
@@ -276,42 +217,31 @@ button{
 </div>
 
 <script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
 
-const LS_TEL = "qlm_tel";
-const LS_NOM = "qlm_nom";
+const tbody = document.getElementById("tbody");
+const statusEl = document.getElementById("status");
+const telInput = document.getElementById("telefono");
+const nomInput = document.getElementById("nombre");
 
-const tbody=document.getElementById("tbody");
-const statusEl=document.getElementById("status");
-const jornadaPill=document.getElementById("jornada-pill");
-const telInput=document.getElementById("telefono");
-const nomInput=document.getElementById("nombre");
-
+/* ===== LOGOS ===== */
 function logo(team){
   let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .toLowerCase().replace(/[^a-z0-9]/g,"");
-  if(s==="cruzazul") return "assets/cruzazul.png";
-  if(s==="sanluis") return "assets/sanluis.png";
   return "assets/"+s+".png";
 }
 
-function formatJornada(sub){
-  if(!sub) return "JORNADA";
-  const m=String(sub).match(/(\d+)/);
-  return m ? "JORNADA "+m[1] : String(sub).toUpperCase();
-}
+/* ===== PERSISTENCIA ===== */
+const LS_TEL="qlm_tel";
+const LS_NOM="qlm_nom";
 
-/* ===== PERSISTENCIA (POR CELULAR) ===== */
 function loadPersisted(){
-  const tel = localStorage.getItem(LS_TEL) || "";
-  const nom = localStorage.getItem(LS_NOM) || "";
-  if(tel) telInput.value = tel;
-  if(nom) nomInput.value = nom;
+  telInput.value = localStorage.getItem(LS_TEL) || "";
+  nomInput.value = localStorage.getItem(LS_NOM) || "";
 }
-
 function savePersisted(){
-  localStorage.setItem(LS_TEL, (telInput.value||"").trim());
-  localStorage.setItem(LS_NOM, (nomInput.value||"").trim());
+  localStorage.setItem(LS_TEL, telInput.value.trim());
+  localStorage.setItem(LS_NOM, nomInput.value.trim());
 }
 
 telInput.addEventListener("input", savePersisted);
@@ -320,38 +250,32 @@ nomInput.addEventListener("input", savePersisted);
 /* ===== CARGA ===== */
 async function cargar(){
   try{
-    // 1) precarga local (por celular)
     loadPersisted();
 
-    // 2) baja config
-    const r=await fetch(SCRIPT_URL+"?action=getConfig");
-    const d=await r.json();
+    const r = await fetch(SCRIPT_URL + "?action=getConfig");
+    const d = await r.json();
     if(!d.ok) throw new Error(d.message);
 
-    // 3) si localStorage está vacío, usa defaults del servidor (solo como respaldo)
-    if(!localStorage.getItem(LS_TEL) && d.defaults?.telefono) telInput.value = d.defaults.telefono;
-    if(!localStorage.getItem(LS_NOM) && d.defaults?.nombre) nomInput.value = d.defaults.nombre;
-    savePersisted();
-
-    jornadaPill.textContent=formatJornada(d.subtitulo);
-
     tbody.innerHTML="";
-    (d.partidos||[]).forEach(p=>{
-      tbody.innerHTML+=`
+
+    (d.partidos || []).forEach((p, i)=>{
+      tbody.innerHTML += `
       <tr data-local="${p.local}" data-visita="${p.visita}">
-        <td class="pick"><label><input type="radio" name="p${p.numero}" value="L"><span>L</span></label></td>
+        <td class="pick"><label><input type="radio" name="p${i+1}" value="L"><span>L</span></label></td>
         <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
-        <td class="pick"><label><input type="radio" name="p${p.numero}" value="E"><span>E</span></label></td>
+        <td class="pick"><label><input type="radio" name="p${i+1}" value="E"><span>E</span></label></td>
         <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
-        <td class="pick"><label><input type="radio" name="p${p.numero}" value="V"><span>V</span></label></td>
+        <td class="pick"><label><input type="radio" name="p${i+1}" value="V"><span>V</span></label></td>
       </tr>`;
     });
+
   }catch(e){
-    statusEl.textContent=e.message;
-    statusEl.className="status error";
+    statusEl.textContent = e.message;
+    statusEl.className = "status error";
   }
 }
 
+/* ===== ACCIONES ===== */
 function limpiar(){
   document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
   statusEl.textContent="";
@@ -359,38 +283,38 @@ function limpiar(){
 
 async function enviar(){
   try{
-    const telefono=telInput.value.trim();
-    const nombre=nomInput.value.trim();
+    const telefono = telInput.value.trim();
+    const nombre = nomInput.value.trim();
 
     if(!telefono) throw new Error("Ingresa teléfono");
     if(!nombre) throw new Error("Ingresa nombre");
 
-    // guarda persistencia antes de enviar
     savePersisted();
 
     const partidos=[];
-    [...tbody.querySelectorAll("tr")].forEach(tr=>{
-      const sel=tr.querySelector("input:checked");
+    [...tbody.querySelectorAll("tr")].forEach((tr,i)=>{
+      const sel = tr.querySelector(`input[name="p${i+1}"]:checked`);
       if(!sel) throw new Error("Faltan selecciones");
       partidos.push({
-        local:tr.dataset.local,
-        visita:tr.dataset.visita,
-        pronostico:sel.value
+        local: tr.dataset.local,
+        visita: tr.dataset.visita,
+        pronostico: sel.value
       });
     });
 
-    const r=await fetch(SCRIPT_URL,{
+    const r = await fetch(SCRIPT_URL,{
       method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify({telefono,nombre,partidos})
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify({ telefono, nombre, partidos })
     });
 
-    const d=JSON.parse(await r.text());
+    const d = JSON.parse(await r.text());
     if(!d.ok) throw new Error(d.message);
 
-    statusEl.textContent="Enviada";
+    statusEl.textContent="Quiniela enviada";
     statusEl.className="status success";
     window.open(d.whatsappUrl,"_blank");
+
   }catch(e){
     statusEl.textContent=e.message;
     statusEl.className="status error";
