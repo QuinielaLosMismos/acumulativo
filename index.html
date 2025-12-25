@@ -251,10 +251,10 @@ button{
 
     <div class="inputs">
       <div class="field">
-        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono">
+        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono" autocomplete="tel">
       </div>
       <div class="field">
-        <input id="nombre" class="inline-input" type="text" placeholder="Nombre">
+        <input id="nombre" class="inline-input" type="text" placeholder="Nombre" autocomplete="name">
       </div>
     </div>
 
@@ -277,9 +277,15 @@ button{
 
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
+
+const LS_TEL = "qlm_tel";
+const LS_NOM = "qlm_nom";
+
 const tbody=document.getElementById("tbody");
 const statusEl=document.getElementById("status");
 const jornadaPill=document.getElementById("jornada-pill");
+const telInput=document.getElementById("telefono");
+const nomInput=document.getElementById("nombre");
 
 function logo(team){
   let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
@@ -295,13 +301,40 @@ function formatJornada(sub){
   return m ? "JORNADA "+m[1] : String(sub).toUpperCase();
 }
 
+/* ===== PERSISTENCIA (POR CELULAR) ===== */
+function loadPersisted(){
+  const tel = localStorage.getItem(LS_TEL) || "";
+  const nom = localStorage.getItem(LS_NOM) || "";
+  if(tel) telInput.value = tel;
+  if(nom) nomInput.value = nom;
+}
+
+function savePersisted(){
+  localStorage.setItem(LS_TEL, (telInput.value||"").trim());
+  localStorage.setItem(LS_NOM, (nomInput.value||"").trim());
+}
+
+telInput.addEventListener("input", savePersisted);
+nomInput.addEventListener("input", savePersisted);
+
+/* ===== CARGA ===== */
 async function cargar(){
   try{
+    // 1) precarga local (por celular)
+    loadPersisted();
+
+    // 2) baja config
     const r=await fetch(SCRIPT_URL+"?action=getConfig");
     const d=await r.json();
     if(!d.ok) throw new Error(d.message);
 
+    // 3) si localStorage está vacío, usa defaults del servidor (solo como respaldo)
+    if(!localStorage.getItem(LS_TEL) && d.defaults?.telefono) telInput.value = d.defaults.telefono;
+    if(!localStorage.getItem(LS_NOM) && d.defaults?.nombre) nomInput.value = d.defaults.nombre;
+    savePersisted();
+
     jornadaPill.textContent=formatJornada(d.subtitulo);
+
     tbody.innerHTML="";
     (d.partidos||[]).forEach(p=>{
       tbody.innerHTML+=`
@@ -326,8 +359,14 @@ function limpiar(){
 
 async function enviar(){
   try{
-    const telefono=document.getElementById("telefono").value.trim();
+    const telefono=telInput.value.trim();
+    const nombre=nomInput.value.trim();
+
     if(!telefono) throw new Error("Ingresa teléfono");
+    if(!nombre) throw new Error("Ingresa nombre");
+
+    // guarda persistencia antes de enviar
+    savePersisted();
 
     const partidos=[];
     [...tbody.querySelectorAll("tr")].forEach(tr=>{
@@ -343,7 +382,7 @@ async function enviar(){
     const r=await fetch(SCRIPT_URL,{
       method:"POST",
       headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify({telefono,nombre:document.getElementById("nombre").value.trim(),partidos})
+      body:JSON.stringify({telefono,nombre,partidos})
     });
 
     const d=JSON.parse(await r.text());
