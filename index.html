@@ -41,13 +41,11 @@ body{
   flex-direction:column;
 }
 
-/* ===== BANNER ===== */
 .banner{
   height:210px;
   background:url("assets/banner.png") center top / cover no-repeat;
 }
 
-/* ===== CONTENT ===== */
 .content{
   flex:1;
   padding:12px;
@@ -56,7 +54,6 @@ body{
   gap:12px;
 }
 
-/* ===== INPUTS ===== */
 .inputs{
   display:flex;
   flex-direction:column;
@@ -80,7 +77,6 @@ body{
   color:var(--text);
 }
 
-/* ===== MATCHES ===== */
 .matches{
   flex:1;
   background:var(--matches);
@@ -146,7 +142,6 @@ tbody tr{ border-top:1px solid var(--rowBorder); }
   object-fit:contain;
 }
 
-/* ===== FOOTER ===== */
 .footer{
   display:flex;
   justify-content:space-between;
@@ -218,20 +213,21 @@ button{
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
+const WHATSAPP_NUMBER = "523313449844";
 
 const tbody = document.getElementById("tbody");
 const statusEl = document.getElementById("status");
 const telInput = document.getElementById("telefono");
 const nomInput = document.getElementById("nombre");
 
-/* ===== LOGOS ===== */
+/* LOGOS */
 function logo(team){
   let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .toLowerCase().replace(/[^a-z0-9]/g,"");
   return "assets/"+s+".png";
 }
 
-/* ===== PERSISTENCIA ===== */
+/* PERSISTENCIA */
 const LS_TEL="qlm_tel";
 const LS_NOM="qlm_nom";
 
@@ -243,22 +239,31 @@ function savePersisted(){
   localStorage.setItem(LS_TEL, telInput.value.trim());
   localStorage.setItem(LS_NOM, nomInput.value.trim());
 }
-
 telInput.addEventListener("input", savePersisted);
 nomInput.addEventListener("input", savePersisted);
 
-/* ===== CARGA ===== */
+/* MENSAJE WHATSAPP */
+function construirMensaje(nombre, telefono, partidos){
+  let msg = "QUINIELA LOS MISMOS\n";
+  msg += `Nombre: ${nombre}\n`;
+  msg += `Teléfono: ${telefono}\n\n`;
+  partidos.forEach((p,i)=>{
+    msg += `${i+1}) ${p.local} vs ${p.visita} → ${p.pronostico}\n`;
+  });
+  return msg.trim();
+}
+
+/* CARGAR */
 async function cargar(){
   try{
     loadPersisted();
 
-    const r = await fetch(SCRIPT_URL + "?action=getConfig");
+    const r = await fetch(SCRIPT_URL+"?action=getConfig");
     const d = await r.json();
     if(!d.ok) throw new Error(d.message);
 
     tbody.innerHTML="";
-
-    (d.partidos || []).forEach((p, i)=>{
+    (d.partidos||[]).forEach((p,i)=>{
       tbody.innerHTML += `
       <tr data-local="${p.local}" data-visita="${p.visita}">
         <td class="pick"><label><input type="radio" name="p${i+1}" value="L"><span>L</span></label></td>
@@ -268,35 +273,23 @@ async function cargar(){
         <td class="pick"><label><input type="radio" name="p${i+1}" value="V"><span>V</span></label></td>
       </tr>`;
     });
-
   }catch(e){
-    statusEl.textContent = e.message;
-    statusEl.className = "status error";
+    statusEl.textContent=e.message;
+    statusEl.className="status error";
   }
 }
 
-/* ===== ACCIONES ===== */
+/* LIMPIAR */
 function limpiar(){
   document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
   statusEl.textContent="";
 }
-  
-function construirMensajeWhatsApp(nombre, telefono, partidos){
-  // partidos = [{local,visita,pronostico}, ...]
-  let msg = `QUINIELA LOS MISMOS\n`;
-  msg += `Nombre: ${nombre}\n`;
-  msg += `Tel: ${telefono}\n\n`;
-  partidos.forEach((p,i)=>{
-    msg += `${i+1}) ${p.local} vs ${p.visita} = ${p.pronostico}\n`;
-  });
-  return msg.trim();
-}
 
+/* ENVIAR */
 async function enviar(){
   try{
     const telefono = telInput.value.trim();
     const nombre = nomInput.value.trim();
-
     if(!telefono) throw new Error("Ingresa teléfono");
     if(!nombre) throw new Error("Ingresa nombre");
 
@@ -322,11 +315,12 @@ async function enviar(){
     const d = JSON.parse(await r.text());
     if(!d.ok) throw new Error(d.message);
 
-    statusEl.textContent="Quiniela enviada";
+    const mensaje = construirMensaje(nombre, telefono, partidos);
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`;
+
+    statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
     statusEl.className="status success";
-    const resumen = construirMensajeWhatsApp(nombre, telefono, partidos);
-const url = `https://wa.me/523313449844?text=${encodeURIComponent(resumen)}`;
-window.open(url, "_blank");
+    window.open(url,"_blank");
 
   }catch(e){
     statusEl.textContent=e.message;
