@@ -280,6 +280,17 @@ function limpiar(){
   document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
   statusEl.textContent="";
 }
+  
+function construirMensajeWhatsApp(nombre, telefono, partidos){
+  // partidos = [{local,visita,pronostico}, ...]
+  let msg = `QUINIELA LOS MISMOS\n`;
+  msg += `Nombre: ${nombre}\n`;
+  msg += `Tel: ${telefono}\n\n`;
+  partidos.forEach((p,i)=>{
+    msg += `${i+1}) ${p.local} vs ${p.visita} = ${p.pronostico}\n`;
+  });
+  return msg.trim();
+}
 
 async function enviar(){
   try{
@@ -313,7 +324,9 @@ async function enviar(){
 
     statusEl.textContent="Quiniela enviada";
     statusEl.className="status success";
-    window.open(d.whatsappUrl,"_blank");
+    const resumen = construirMensajeWhatsApp(nombre, telefono, partidos);
+const url = `https://wa.me/523313449844?text=${encodeURIComponent(resumen)}`;
+window.open(url, "_blank");
 
   }catch(e){
     statusEl.textContent=e.message;
