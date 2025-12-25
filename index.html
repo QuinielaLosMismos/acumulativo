@@ -244,7 +244,7 @@ function savePersisted(){
 telInput.addEventListener("input", savePersisted);
 nomInput.addEventListener("input", savePersisted);
 
-/* MENSAJE WHATSAPP */
+/* MENSAJE WHATSAPP (1 renglón por partido) */
 function construirMensaje(nombre, partidos){
   let msg = "🏆 *QUINIELA LOS MISMOS*\n";
   msg += `📅 *${JORNADA_TXT}*\n`;
@@ -252,8 +252,8 @@ function construirMensaje(nombre, partidos){
   msg += `👤 *${nombre}*\n\n`;
 
   partidos.forEach((p,i)=>{
-    msg += `${i+1}. ${p.local} vs ${p.visita}\n`;
-    msg += `   ➜ *${p.pronostico}*\n`;
+    // 1 sola línea por partido
+    msg += `${i+1}) ${p.local} vs ${p.visita} — *${p.pronostico}*\n`;
   });
 
   msg += "\n━━━━━━━━━━━━━━━";
@@ -271,8 +271,11 @@ async function cargar(){
     const d = await r.json();
     if(!d.ok) throw new Error(d.message);
 
-    if (d.subtitulo) {
-      JORNADA_TXT = d.subtitulo.toUpperCase();
+    // ✅ AQUÍ se arma la jornada con el número real
+    if (d.jornada) {
+      JORNADA_TXT = `JORNADA ${d.jornada}`;
+    } else {
+      JORNADA_TXT = "JORNADA";
     }
 
     tbody.innerHTML="";
