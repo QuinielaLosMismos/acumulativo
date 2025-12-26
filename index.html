@@ -284,13 +284,19 @@ function showConfirm(msg, title="Confirmar"){
     modalTitle.textContent = title;
     modalMsg.textContent = msg;
     modalActions.innerHTML = `
-      <button class="btn-ghost" id="mCancel">Cancelar</button>
-      <button class="btn-primary" id="mOk">Reemplazar</button>
+      <button class="btn-ghost" id="mNo">NO</button>
+      <button class="btn-primary" id="mYes">SI</button>
     `;
     modal.classList.add("show");
 
-    document.getElementById("mCancel").onclick = () => { hideModal(); resolve(false); };
-    document.getElementById("mOk").onclick = () => { hideModal(); resolve(true); };
+    document.getElementById("mNo").onclick = () => {
+      hideModal();
+      resolve(false);
+    };
+    document.getElementById("mYes").onclick = () => {
+      hideModal();
+      resolve(true);
+    };
   });
 }
 
