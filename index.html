@@ -175,6 +175,7 @@ button{
   padding:14px;
 }
 
+/* Título existe pero lo escondemos cuando no se usa */
 .modal-title{
   font-weight:900;
   letter-spacing:.04em;
@@ -232,7 +233,7 @@ button{
       <!-- Modal -->
       <div class="modal" id="modal">
         <div class="modal-card">
-          <div class="modal-title" id="modalTitle">Mensaje</div>
+          <div class="modal-title" id="modalTitle"></div>
           <p class="modal-msg" id="modalMsg"></p>
           <div class="modal-actions" id="modalActions"></div>
         </div>
@@ -270,18 +271,22 @@ let JORNADA_TXT = "JORNADA";
 function hideModal(){
   modal.classList.remove("show");
   modalActions.innerHTML = "";
+  modalTitle.style.display = ""; // restaura por si luego se usa en alert
 }
 
-function showAlert(msg, title="Aviso"){
-  modalTitle.textContent = title;
+function showAlert(msg){
+  modalTitle.textContent = "";       // sin título también en alert
+  modalTitle.style.display = "none";
   modalMsg.textContent = msg;
   modalActions.innerHTML = `<button class="btn-ghost" onclick="hideModal()">OK</button>`;
   modal.classList.add("show");
 }
 
-function showConfirm(msg, title="Confirmar"){
+function showConfirm(msg){
   return new Promise(resolve=>{
-    modalTitle.textContent = title;
+    modalTitle.textContent = "";
+    modalTitle.style.display = "none";
+
     modalMsg.textContent = msg;
     modalActions.innerHTML = `
       <button class="btn-ghost" id="mNo">NO</button>
@@ -289,14 +294,8 @@ function showConfirm(msg, title="Confirmar"){
     `;
     modal.classList.add("show");
 
-    document.getElementById("mNo").onclick = () => {
-      hideModal();
-      resolve(false);
-    };
-    document.getElementById("mYes").onclick = () => {
-      hideModal();
-      resolve(true);
-    };
+    document.getElementById("mNo").onclick = () => { hideModal(); resolve(false); };
+    document.getElementById("mYes").onclick = () => { hideModal(); resolve(true); };
   });
 }
 
@@ -322,7 +321,7 @@ function savePersisted(){
 telInput.addEventListener("input", savePersisted);
 nomInput.addEventListener("input", savePersisted);
 
-/* MENSAJE WHATSAPP (1 línea por partido) */
+/* MENSAJE WHATSAPP */
 function construirMensaje(nombre, partidos){
   let msg = "🏆 *QUINIELA LOS MISMOS*\n";
   msg += `📅 *${JORNADA_TXT}*\n`;
@@ -373,7 +372,7 @@ function limpiar(){
   statusEl.textContent="";
 }
 
-/* Construir payload de envío */
+/* Construir payload */
 function buildPayload(){
   const telefono = telInput.value.trim();
   const nombre = nomInput.value.trim();
@@ -394,7 +393,7 @@ function buildPayload(){
   return { telefono, nombre, partidos };
 }
 
-/* ENVIAR (con confirmación de reemplazo) */
+/* ENVIAR */
 async function enviar(){
   try{
     savePersisted();
@@ -409,9 +408,9 @@ async function enviar(){
 
     let d = JSON.parse(await r.text());
 
-    // 2) si es duplicado, preguntar y reenviar con replace:true
+    // 2) si es duplicado → modal SI/NO
     if(!d.ok && d.code === "DUPLICATE"){
-      const ok = await showConfirm(d.message, "Reemplazar quiniela");
+      const ok = await showConfirm("Ya existe una quiniela con este nombre en esta jornada. ¿Quieres reemplazarla?");
       if(!ok) return;
 
       r = await fetch(SCRIPT_URL,{
@@ -424,7 +423,7 @@ async function enviar(){
     }
 
     if(!d.ok){
-      showAlert(d.message || "Error al enviar", "Error");
+      showAlert(d.message || "Error al enviar");
       return;
     }
 
@@ -436,7 +435,7 @@ async function enviar(){
     window.location.href = url;
 
   }catch(e){
-    showAlert(e.message || String(e), "Error");
+    showAlert(e.message || String(e));
   }
 }
 
