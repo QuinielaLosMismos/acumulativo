@@ -329,7 +329,30 @@ async function enviar(){
     });
 
     const d = JSON.parse(await r.text());
-    if(!d.ok) throw new Error(d.message);
+
+if(!d.ok){
+  if(d.code === "DUPLICATE"){
+    const ok = confirm(d.message);
+    if(ok){
+      // reenviar con replace=true
+      await fetch(SCRIPT_URL,{
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          telefono,
+          nombre,
+          partidos,
+          replace:true
+        })
+      });
+      statusEl.textContent="Quiniela reemplazada y registrada";
+      statusEl.className="status success";
+      return;
+    }
+    return;
+  }
+  throw new Error(d.message);
+}
 
     const mensaje = construirMensaje(nombre, partidos);
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
