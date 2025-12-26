@@ -431,8 +431,12 @@ async function enviar(){
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
 
     statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
-    statusEl.className="status success";
-    window.location.href = url;
+statusEl.className="status success";
+
+/* LIMPIAR CUPÓN (solo selecciones) */
+document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
+
+window.location.href = url;
 
   }catch(e){
     showAlert(e.message || String(e));
