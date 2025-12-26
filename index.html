@@ -78,6 +78,7 @@ body{
 }
 
 .matches{
+  position:relative;
   flex:1;
   background:var(--matches);
   border-radius:16px;
@@ -92,27 +93,19 @@ table{
   font-size:.92rem;
 }
 
-td{
-  padding:10px 6px;
-}
-
+td{ padding:10px 6px; }
 tbody tr:nth-child(odd){background:var(--rowA)}
 tbody tr:nth-child(even){background:var(--rowB)}
 tbody tr{ border-top:1px solid var(--rowBorder); }
 
-.pick{
-  width:42px;
-  text-align:center;
-}
+.pick{ width:42px; text-align:center; }
 .pick label{position:relative;display:inline-block}
 .pick input{position:absolute;opacity:0}
 
 .pick span{
   display:inline-flex;
-  width:36px;
-  height:32px;
-  align-items:center;
-  justify-content:center;
+  width:36px;height:32px;
+  align-items:center;justify-content:center;
   border-radius:12px;
   border:2px solid var(--pick);
   color:var(--pick);
@@ -120,13 +113,10 @@ tbody tr{ border-top:1px solid var(--rowBorder); }
 }
 .pick input:checked + span{
   background:var(--pickDark);
-  color:#ffffff;
+  color:#fff;
 }
 
-.teamCell{
-  width:33%;
-  text-align:center;
-}
+.teamCell{ width:33%; text-align:center; }
 .team{
   display:flex;
   flex-direction:column;
@@ -136,11 +126,7 @@ tbody tr{ border-top:1px solid var(--rowBorder); }
   text-transform:uppercase;
   font-size:.82rem;
 }
-.team img{
-  width:26px;
-  height:26px;
-  object-fit:contain;
-}
+.team img{ width:26px; height:26px; object-fit:contain; }
 
 .footer{
   display:flex;
@@ -155,10 +141,7 @@ tbody tr{ border-top:1px solid var(--rowBorder); }
 .status.error{color:var(--danger)}
 .status.success{color:#166534}
 
-.actions{
-  display:flex;
-  gap:10px;
-}
+.actions{ display:flex; gap:10px; }
 button{
   border:none;
   border-radius:999px;
@@ -167,13 +150,60 @@ button{
   font-weight:900;
   cursor:pointer;
 }
-.btn-clear{
-  background:#ffffff;
+.btn-clear{ background:#fff; color:var(--pickDark); }
+.btn-send{ background:var(--pickDark); color:#fff; }
+
+/* ===== MODAL (centrado sobre matches) ===== */
+.modal{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  background:rgba(2,6,23,.28);
+  z-index:10;
+}
+.modal.show{ display:flex; }
+
+.modal-card{
+  width:min(420px, 95%);
+  background:linear-gradient(180deg, var(--rowA), var(--rowB));
+  border:2px solid rgba(255,255,255,.85);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:14px;
+}
+
+.modal-title{
+  font-weight:900;
+  letter-spacing:.04em;
+  margin:0 0 8px 0;
+  text-transform:uppercase;
+  font-size:.9rem;
+  color:rgba(15,23,42,.85);
+}
+
+.modal-msg{
+  margin:0 0 12px 0;
+  line-height:1.35;
+  font-weight:700;
+  color:rgba(15,23,42,.9);
+}
+
+.modal-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+}
+
+.btn-ghost{
+  background:#fff;
   color:var(--pickDark);
 }
-.btn-send{
+.btn-primary{
   background:var(--pickDark);
-  color:#ffffff;
+  color:#fff;
 }
 </style>
 </head>
@@ -194,10 +224,19 @@ button{
       </div>
     </div>
 
-    <div class="matches">
+    <div class="matches" id="matches">
       <table>
         <tbody id="tbody"></tbody>
       </table>
+
+      <!-- Modal -->
+      <div class="modal" id="modal">
+        <div class="modal-card">
+          <div class="modal-title" id="modalTitle">Mensaje</div>
+          <p class="modal-msg" id="modalMsg"></p>
+          <div class="modal-actions" id="modalActions"></div>
+        </div>
+      </div>
     </div>
 
     <div class="footer">
@@ -220,7 +259,40 @@ const statusEl = document.getElementById("status");
 const telInput = document.getElementById("telefono");
 const nomInput = document.getElementById("nombre");
 
+const modal = document.getElementById("modal");
+const modalTitle = document.getElementById("modalTitle");
+const modalMsg = document.getElementById("modalMsg");
+const modalActions = document.getElementById("modalActions");
+
 let JORNADA_TXT = "JORNADA";
+
+/* ===== Modal helpers ===== */
+function hideModal(){
+  modal.classList.remove("show");
+  modalActions.innerHTML = "";
+}
+
+function showAlert(msg, title="Aviso"){
+  modalTitle.textContent = title;
+  modalMsg.textContent = msg;
+  modalActions.innerHTML = `<button class="btn-ghost" onclick="hideModal()">OK</button>`;
+  modal.classList.add("show");
+}
+
+function showConfirm(msg, title="Confirmar"){
+  return new Promise(resolve=>{
+    modalTitle.textContent = title;
+    modalMsg.textContent = msg;
+    modalActions.innerHTML = `
+      <button class="btn-ghost" id="mCancel">Cancelar</button>
+      <button class="btn-primary" id="mOk">Reemplazar</button>
+    `;
+    modal.classList.add("show");
+
+    document.getElementById("mCancel").onclick = () => { hideModal(); resolve(false); };
+    document.getElementById("mOk").onclick = () => { hideModal(); resolve(true); };
+  });
+}
 
 /* LOGOS */
 function logo(team){
@@ -244,7 +316,7 @@ function savePersisted(){
 telInput.addEventListener("input", savePersisted);
 nomInput.addEventListener("input", savePersisted);
 
-/* MENSAJE WHATSAPP (1 renglón por partido) */
+/* MENSAJE WHATSAPP (1 línea por partido) */
 function construirMensaje(nombre, partidos){
   let msg = "🏆 *QUINIELA LOS MISMOS*\n";
   msg += `📅 *${JORNADA_TXT}*\n`;
@@ -252,13 +324,11 @@ function construirMensaje(nombre, partidos){
   msg += `👤 *${nombre}*\n\n`;
 
   partidos.forEach((p,i)=>{
-    // 1 sola línea por partido
     msg += `${i+1}) ${p.local} vs ${p.visita} — *${p.pronostico}*\n`;
   });
 
   msg += "\n━━━━━━━━━━━━━━━";
   msg += "\n✅ *Quiniela enviada y registrada*";
-
   return msg.trim();
 }
 
@@ -271,12 +341,8 @@ async function cargar(){
     const d = await r.json();
     if(!d.ok) throw new Error(d.message);
 
-    // ✅ AQUÍ se arma la jornada con el número real
-    if (d.jornada) {
-      JORNADA_TXT = `JORNADA ${d.jornada}`;
-    } else {
-      JORNADA_TXT = "JORNADA";
-    }
+    if (d.jornada) JORNADA_TXT = `JORNADA ${d.jornada}`;
+    else JORNADA_TXT = "JORNADA";
 
     tbody.innerHTML="";
     (d.partidos||[]).forEach((p,i)=>{
@@ -301,60 +367,62 @@ function limpiar(){
   statusEl.textContent="";
 }
 
-/* ENVIAR */
-async function enviar(){
-  try{
-    const telefono = telInput.value.trim();
-    const nombre = nomInput.value.trim();
-    if(!telefono) throw new Error("Ingresa teléfono");
-    if(!nombre) throw new Error("Ingresa nombre");
+/* Construir payload de envío */
+function buildPayload(){
+  const telefono = telInput.value.trim();
+  const nombre = nomInput.value.trim();
+  if(!telefono) throw new Error("Ingresa teléfono");
+  if(!nombre) throw new Error("Ingresa nombre");
 
-    savePersisted();
-
-    const partidos=[];
-    [...tbody.querySelectorAll("tr")].forEach((tr,i)=>{
-      const sel = tr.querySelector(`input[name="p${i+1}"]:checked`);
-      if(!sel) throw new Error("Faltan selecciones");
-      partidos.push({
-        local: tr.dataset.local,
-        visita: tr.dataset.visita,
-        pronostico: sel.value
-      });
+  const partidos=[];
+  [...tbody.querySelectorAll("tr")].forEach((tr,i)=>{
+    const sel = tr.querySelector(`input[name="p${i+1}"]:checked`);
+    if(!sel) throw new Error("Faltan selecciones");
+    partidos.push({
+      local: tr.dataset.local,
+      visita: tr.dataset.visita,
+      pronostico: sel.value
     });
+  });
 
-    const r = await fetch(SCRIPT_URL,{
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify({ telefono, nombre, partidos })
-    });
-
-    const d = JSON.parse(await r.text());
-
-if(!d.ok){
-  if(d.code === "DUPLICATE"){
-    const ok = confirm(d.message);
-    if(ok){
-      // reenviar con replace=true
-      await fetch(SCRIPT_URL,{
-        method:"POST",
-        headers:{ "Content-Type":"text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          telefono,
-          nombre,
-          partidos,
-          replace:true
-        })
-      });
-      statusEl.textContent="Quiniela reemplazada y registrada";
-      statusEl.className="status success";
-      return;
-    }
-    return;
-  }
-  throw new Error(d.message);
+  return { telefono, nombre, partidos };
 }
 
-    const mensaje = construirMensaje(nombre, partidos);
+/* ENVIAR (con confirmación de reemplazo) */
+async function enviar(){
+  try{
+    savePersisted();
+    const payload = buildPayload();
+
+    // 1) intento normal
+    let r = await fetch(SCRIPT_URL,{
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    let d = JSON.parse(await r.text());
+
+    // 2) si es duplicado, preguntar y reenviar con replace:true
+    if(!d.ok && d.code === "DUPLICATE"){
+      const ok = await showConfirm(d.message, "Reemplazar quiniela");
+      if(!ok) return;
+
+      r = await fetch(SCRIPT_URL,{
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({ ...payload, replace:true })
+      });
+
+      d = JSON.parse(await r.text());
+    }
+
+    if(!d.ok){
+      showAlert(d.message || "Error al enviar", "Error");
+      return;
+    }
+
+    const mensaje = construirMensaje(payload.nombre, payload.partidos);
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
 
     statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
@@ -362,8 +430,7 @@ if(!d.ok){
     window.location.href = url;
 
   }catch(e){
-    statusEl.textContent=e.message;
-    statusEl.className="status error";
+    showAlert(e.message || String(e), "Error");
   }
 }
 
