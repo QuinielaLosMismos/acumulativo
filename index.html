@@ -435,6 +435,14 @@ statusEl.className="status success";
 
 /* LIMPIAR CUPÓN (solo selecciones) */
 document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
+// Limpia solo selecciones
+document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
+
+// Quita el mensaje después de 1.5s (nombre/teléfono se quedan)
+setTimeout(() => {
+  statusEl.textContent = "";
+  statusEl.className = "status";
+}, 1500);
 
 window.location.href = url;
 
