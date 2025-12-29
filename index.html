@@ -91,6 +91,7 @@ body{
   color:var(--text);
 }
 
+/* ✅ Cupón completo: scroll interno si el teléfono es chico */
 .matches{
   position:relative;
   flex:1;
@@ -99,12 +100,25 @@ body{
   overflow:hidden;
   border:2px solid var(--cardBorder);
   box-shadow:var(--shadow);
-}
 
-table{
+  /* clave: no crece infinito, mantiene visible footer */
+  max-height: calc(100vh - 210px - 12px - 12px - 110px); /* banner + paddings + inputs/footer aprox */
+  min-height: 260px;
+}
+.matches table{
   width:100%;
   border-collapse:collapse;
   font-size:.92rem;
+}
+.matches tbody{
+  display:block;
+  overflow:auto;
+  max-height: 100%;
+}
+.matches tr{
+  display:table;
+  width:100%;
+  table-layout:fixed;
 }
 
 td{ padding:10px 6px; }
@@ -176,7 +190,7 @@ button{
   justify-content:center;
   padding:14px;
   background:rgba(2,6,23,.28);
-  z-index:10;
+  z-index:20;
 }
 .modal.show{ display:flex; }
 
@@ -219,6 +233,44 @@ button{
 .btn-primary{
   background:var(--pickDark);
   color:#fff;
+}
+
+/* ===== LOADING overlay ===== */
+.loading{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(2,6,23,.35);
+  z-index:50;
+}
+.loading.show{ display:flex; }
+.loading-card{
+  width:min(420px, 92%);
+  background:rgba(255,255,255,.92);
+  border:2px solid rgba(255,255,255,.85);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:14px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.spinner{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:3px solid rgba(66,95,156,.25);
+  border-top-color: rgba(66,95,156,1);
+  animation: spin 0.9s linear infinite;
+  flex:0 0 auto;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.loading-text{
+  font-weight:800;
+  color:rgba(15,23,42,.85);
 }
 </style>
 </head>
@@ -267,6 +319,14 @@ button{
   </div>
 </div>
 
+<!-- Loading -->
+<div class="loading" id="loading">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Cargando…</div>
+  </div>
+</div>
+
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
 const WHATSAPP_NUMBER = "523313449844";
@@ -275,7 +335,6 @@ const tbody = document.getElementById("tbody");
 const statusEl = document.getElementById("status");
 const telInput = document.getElementById("telefono");
 const nomInput = document.getElementById("nombre");
-
 const bannerJornadaEl = document.getElementById("bannerJornada");
 
 const modal = document.getElementById("modal");
@@ -283,13 +342,25 @@ const modalTitle = document.getElementById("modalTitle");
 const modalMsg = document.getElementById("modalMsg");
 const modalActions = document.getElementById("modalActions");
 
+const loading = document.getElementById("loading");
+const loadingText = document.getElementById("loadingText");
+
 let JORNADA_TXT = "JORNADA";
 let JORNADA_NUM = null;
+
+/* ===== Loading helpers ===== */
+function showLoading(text="Cargando…"){
+  loadingText.textContent = text;
+  loading.classList.add("show");
+}
+function hideLoading(){
+  loading.classList.remove("show");
+}
 
 /* ========= Nombre: MAYÚSCULAS y sin acentos (cliente) ========= */
 function sanitizeNombreClient(v){
   return (v || "")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // sin acentos
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .replace(/\s+/g," ")
     .trim()
     .toUpperCase();
@@ -302,7 +373,6 @@ nomInput.addEventListener("input", () => {
   const after = sanitizeNombreClient(before);
   if (after !== before){
     nomInput.value = after;
-    // intenta conservar cursor (mejor esfuerzo)
     nomInput.setSelectionRange(pos, pos);
   }
   savePersisted();
@@ -314,7 +384,6 @@ function hideModal(){
   modalActions.innerHTML = "";
   modalTitle.style.display = "";
 }
-
 function showAlert(msg){
   modalTitle.textContent = "";
   modalTitle.style.display = "none";
@@ -322,7 +391,6 @@ function showAlert(msg){
   modalActions.innerHTML = `<button class="btn-ghost" onclick="hideModal()">OK</button>`;
   modal.classList.add("show");
 }
-
 function showConfirm(msg){
   return new Promise(resolve=>{
     modalTitle.textContent = "";
@@ -351,10 +419,12 @@ function logo(team){
 const LS_TEL="qlm_tel";
 const LS_NOM="qlm_nom";
 
+/* ✅ Cache de config para pintar rápido */
+const LS_CFG="qlm_cfg_cache_v1"; // { jornada, partidos, ts }
+
 function loadPersisted(){
   telInput.value = localStorage.getItem(LS_TEL) || "";
   nomInput.value = localStorage.getItem(LS_NOM) || "";
-  // Re-sanitiza al cargar
   nomInput.value = sanitizeNombreClient(nomInput.value);
 }
 function savePersisted(){
@@ -363,44 +433,22 @@ function savePersisted(){
 }
 telInput.addEventListener("input", savePersisted);
 
-/* MENSAJE WHATSAPP */
-function construirMensaje(nombre, partidos){
-  let msg = "🏆 *QUINIELA LOS MISMOS*\n";
-  msg += `📅 *${JORNADA_TXT}*\n`;
-  msg += "━━━━━━━━━━━━━━━\n";
-  msg += `👤 *${nombre}*\n\n`;
-
-  partidos.forEach((p,i)=>{
-    msg += `${i+1}) ${p.local} vs ${p.visita} — *${p.pronostico}*\n`;
-  });
-
-  msg += "\n━━━━━━━━━━━━━━━";
-  msg += "\n✅ *Quiniela enviada y registrada*";
-  return msg.trim();
+function setBanner(j){
+  if (j) {
+    JORNADA_NUM = Number(j) || null;
+    JORNADA_TXT = `JORNADA ${JORNADA_NUM}`;
+    bannerJornadaEl.textContent = `Jornada ${JORNADA_NUM}`;
+  } else {
+    JORNADA_NUM = null;
+    JORNADA_TXT = "JORNADA";
+    bannerJornadaEl.textContent = "Jornada";
+  }
 }
 
-/* CARGAR */
-async function cargar(){
-  try{
-    loadPersisted();
-
-    const r = await fetch(SCRIPT_URL+"?action=getConfig");
-    const d = await r.json();
-    if(!d.ok) throw new Error(d.message);
-
-    JORNADA_NUM = Number(d.jornada) || null;
-
-    if (JORNADA_NUM) {
-      JORNADA_TXT = `JORNADA ${JORNADA_NUM}`;
-      bannerJornadaEl.textContent = `Jornada ${JORNADA_NUM}`; // overlay en banner
-    } else {
-      JORNADA_TXT = "JORNADA";
-      bannerJornadaEl.textContent = "Jornada";
-    }
-
-    tbody.innerHTML="";
-    (d.partidos||[]).forEach((p,i)=>{
-      tbody.innerHTML += `
+function renderPartidos(partidos){
+  tbody.innerHTML = "";
+  (partidos||[]).forEach((p,i)=>{
+    tbody.innerHTML += `
       <tr data-local="${p.local}" data-visita="${p.visita}">
         <td class="pick"><label><input type="radio" name="p${i+1}" value="L"><span>L</span></label></td>
         <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
@@ -408,10 +456,58 @@ async function cargar(){
         <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
         <td class="pick"><label><input type="radio" name="p${i+1}" value="V"><span>V</span></label></td>
       </tr>`;
-    });
+  });
+}
+
+/* MENSAJE WHATSAPP */
+function construirMensaje(nombre, partidos){
+  let msg = "🏆 *QUINIELA LOS MISMOS*\n";
+  msg += `📅 *${JORNADA_TXT}*\n`;
+  msg += "━━━━━━━━━━━━━━━\n";
+  msg += `👤 *${nombre}*\n\n`;
+  partidos.forEach((p,i)=>{
+    msg += `${i+1}) ${p.local} vs ${p.visita} — *${p.pronostico}*\n`;
+  });
+  msg += "\n━━━━━━━━━━━━━━━";
+  msg += "\n✅ *Quiniela enviada y registrada*";
+  return msg.trim();
+}
+
+/* CARGAR */
+async function cargar(){
+  loadPersisted();
+
+  // 1) pinta inmediato desde cache (si existe)
+  try{
+    const cached = JSON.parse(localStorage.getItem(LS_CFG) || "null");
+    if (cached && Array.isArray(cached.partidos) && cached.partidos.length){
+      setBanner(cached.jornada);
+      renderPartidos(cached.partidos);
+    }
+  }catch(_){}
+
+  // 2) ahora sí carga real con loader
+  showLoading("Cargando quiniela…");
+  try{
+    const r = await fetch(SCRIPT_URL+"?action=getConfig");
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.message);
+
+    setBanner(d.jornada);
+    renderPartidos(d.partidos || []);
+
+    // guarda cache
+    localStorage.setItem(LS_CFG, JSON.stringify({
+      jornada: d.jornada || null,
+      partidos: d.partidos || [],
+      ts: Date.now()
+    }));
+
+    hideLoading();
   }catch(e){
-    statusEl.textContent=e.message;
-    statusEl.className="status error";
+    hideLoading();
+    statusEl.textContent = e.message;
+    statusEl.className = "status error";
   }
 }
 
@@ -449,9 +545,7 @@ async function enviar(){
     savePersisted();
     const payload = buildPayload();
 
-    // ✅ Nota: La excepción de "permitir nuevos en Jornada 2"
-    // se maneja en el Code.gs (servidor). Aquí NO bloqueamos.
-    // Si el servidor rechaza, mostramos el mensaje.
+    showLoading("Enviando quiniela…");
 
     // 1) intento normal
     let r = await fetch(SCRIPT_URL,{
@@ -464,9 +558,11 @@ async function enviar(){
 
     // 2) si es duplicado → modal SI/NO
     if(!d.ok && d.code === "DUPLICATE"){
+      hideLoading();
       const ok = await showConfirm("Ya existe una quiniela con este nombre en esta jornada. ¿Quieres reemplazarla?");
       if(!ok) return;
 
+      showLoading("Reemplazando quiniela…");
       r = await fetch(SCRIPT_URL,{
         method:"POST",
         headers:{ "Content-Type":"text/plain;charset=utf-8" },
@@ -475,6 +571,8 @@ async function enviar(){
 
       d = JSON.parse(await r.text());
     }
+
+    hideLoading();
 
     if(!d.ok){
       showAlert(d.message || "Error al enviar");
@@ -490,7 +588,6 @@ async function enviar(){
     /* LIMPIAR CUPÓN (solo selecciones) */
     document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
 
-    // Quita el mensaje después de 1.5s (nombre/teléfono se quedan)
     setTimeout(() => {
       statusEl.textContent = "";
       statusEl.className = "status";
@@ -499,6 +596,7 @@ async function enviar(){
     window.location.href = url;
 
   }catch(e){
+    hideLoading();
     showAlert(e.message || String(e));
   }
 }
