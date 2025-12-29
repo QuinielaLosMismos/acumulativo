@@ -28,6 +28,8 @@
 }
 
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+html,body{ overflow-x:hidden; } /* ✅ no horizontal */
+
 body{
   margin:0;
   min-height:100vh;
@@ -91,34 +93,22 @@ body{
   color:var(--text);
 }
 
-/* ✅ Cupón completo: scroll interno si el teléfono es chico */
+/* ✅ SIN scroll interno: la página scrollea normal */
 .matches{
   position:relative;
-  flex:1;
+  flex:0 0 auto;          /* no forzar alturas */
   background:var(--matches);
   border-radius:16px;
-  overflow:hidden;
+  overflow:hidden;         /* evita horizontal */
   border:2px solid var(--cardBorder);
   box-shadow:var(--shadow);
-
-  /* clave: no crece infinito, mantiene visible footer */
-  max-height: calc(100vh - 210px - 12px - 12px - 110px); /* banner + paddings + inputs/footer aprox */
-  min-height: 260px;
 }
-.matches table{
+
+table{
   width:100%;
   border-collapse:collapse;
   font-size:.92rem;
-}
-.matches tbody{
-  display:block;
-  overflow:auto;
-  max-height: 100%;
-}
-.matches tr{
-  display:table;
-  width:100%;
-  table-layout:fixed;
+  table-layout:fixed;      /* ayuda a no desbordar */
 }
 
 td{ padding:10px 6px; }
@@ -144,7 +134,7 @@ tbody tr{ border-top:1px solid var(--rowBorder); }
   color:#fff;
 }
 
-.teamCell{ width:33%; text-align:center; }
+.teamCell{ width:33%; text-align:center; overflow:hidden; }
 .team{
   display:flex;
   flex-direction:column;
@@ -153,6 +143,7 @@ tbody tr{ border-top:1px solid var(--rowBorder); }
   font-weight:900;
   text-transform:uppercase;
   font-size:.82rem;
+  overflow:hidden;
 }
 .team img{ width:26px; height:26px; object-fit:contain; }
 
@@ -203,7 +194,6 @@ button{
   padding:14px;
 }
 
-/* Título existe pero lo escondemos cuando no se usa */
 .modal-title{
   font-weight:900;
   letter-spacing:.04em;
@@ -272,6 +262,23 @@ button{
   font-weight:800;
   color:rgba(15,23,42,.85);
 }
+
+/* ===== Responsive: para que quepa mejor sin horizontal ===== */
+@media (max-width:420px){
+  .banner{ height:160px; }
+  .content{ padding:10px; gap:10px; }
+
+  td{ padding:8px 4px; }
+  table{ font-size:.86rem; }
+
+  .pick{ width:36px; }
+  .pick span{ width:30px; height:28px; border-radius:10px; }
+
+  .team{ font-size:.76rem; }
+  .team img{ width:22px; height:22px; }
+
+  button{ padding:9px 14px; font-size:.85rem; }
+}
 </style>
 </head>
 
@@ -335,6 +342,7 @@ const tbody = document.getElementById("tbody");
 const statusEl = document.getElementById("status");
 const telInput = document.getElementById("telefono");
 const nomInput = document.getElementById("nombre");
+
 const bannerJornadaEl = document.getElementById("bannerJornada");
 
 const modal = document.getElementById("modal");
@@ -384,6 +392,7 @@ function hideModal(){
   modalActions.innerHTML = "";
   modalTitle.style.display = "";
 }
+
 function showAlert(msg){
   modalTitle.textContent = "";
   modalTitle.style.display = "none";
@@ -391,6 +400,7 @@ function showAlert(msg){
   modalActions.innerHTML = `<button class="btn-ghost" onclick="hideModal()">OK</button>`;
   modal.classList.add("show");
 }
+
 function showConfirm(msg){
   return new Promise(resolve=>{
     modalTitle.textContent = "";
@@ -419,9 +429,6 @@ function logo(team){
 const LS_TEL="qlm_tel";
 const LS_NOM="qlm_nom";
 
-/* ✅ Cache de config para pintar rápido */
-const LS_CFG="qlm_cfg_cache_v1"; // { jornada, partidos, ts }
-
 function loadPersisted(){
   telInput.value = localStorage.getItem(LS_TEL) || "";
   nomInput.value = localStorage.getItem(LS_NOM) || "";
@@ -433,11 +440,15 @@ function savePersisted(){
 }
 telInput.addEventListener("input", savePersisted);
 
+/* ✅ Cache de config para pintar rápido */
+const LS_CFG="qlm_cfg_cache_v1"; // { jornada, partidos, ts }
+
 function setBanner(j){
-  if (j) {
-    JORNADA_NUM = Number(j) || null;
-    JORNADA_TXT = `JORNADA ${JORNADA_NUM}`;
-    bannerJornadaEl.textContent = `Jornada ${JORNADA_NUM}`;
+  const n = Number(j);
+  if (Number.isFinite(n) && n > 0){
+    JORNADA_NUM = n;
+    JORNADA_TXT = `JORNADA ${n}`;
+    bannerJornadaEl.textContent = `Jornada ${n}`;
   } else {
     JORNADA_NUM = null;
     JORNADA_TXT = "JORNADA";
@@ -446,16 +457,16 @@ function setBanner(j){
 }
 
 function renderPartidos(partidos){
-  tbody.innerHTML = "";
+  tbody.innerHTML="";
   (partidos||[]).forEach((p,i)=>{
     tbody.innerHTML += `
-      <tr data-local="${p.local}" data-visita="${p.visita}">
-        <td class="pick"><label><input type="radio" name="p${i+1}" value="L"><span>L</span></label></td>
-        <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
-        <td class="pick"><label><input type="radio" name="p${i+1}" value="E"><span>E</span></label></td>
-        <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
-        <td class="pick"><label><input type="radio" name="p${i+1}" value="V"><span>V</span></label></td>
-      </tr>`;
+    <tr data-local="${p.local}" data-visita="${p.visita}">
+      <td class="pick"><label><input type="radio" name="p${i+1}" value="L"><span>L</span></label></td>
+      <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
+      <td class="pick"><label><input type="radio" name="p${i+1}" value="E"><span>E</span></label></td>
+      <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
+      <td class="pick"><label><input type="radio" name="p${i+1}" value="V"><span>V</span></label></td>
+    </tr>`;
   });
 }
 
@@ -465,9 +476,11 @@ function construirMensaje(nombre, partidos){
   msg += `📅 *${JORNADA_TXT}*\n`;
   msg += "━━━━━━━━━━━━━━━\n";
   msg += `👤 *${nombre}*\n\n`;
+
   partidos.forEach((p,i)=>{
     msg += `${i+1}) ${p.local} vs ${p.visita} — *${p.pronostico}*\n`;
   });
+
   msg += "\n━━━━━━━━━━━━━━━";
   msg += "\n✅ *Quiniela enviada y registrada*";
   return msg.trim();
@@ -477,7 +490,7 @@ function construirMensaje(nombre, partidos){
 async function cargar(){
   loadPersisted();
 
-  // 1) pinta inmediato desde cache (si existe)
+  // pinta inmediato desde cache (si existe)
   try{
     const cached = JSON.parse(localStorage.getItem(LS_CFG) || "null");
     if (cached && Array.isArray(cached.partidos) && cached.partidos.length){
@@ -486,7 +499,6 @@ async function cargar(){
     }
   }catch(_){}
 
-  // 2) ahora sí carga real con loader
   showLoading("Cargando quiniela…");
   try{
     const r = await fetch(SCRIPT_URL+"?action=getConfig");
@@ -496,7 +508,6 @@ async function cargar(){
     setBanner(d.jornada);
     renderPartidos(d.partidos || []);
 
-    // guarda cache
     localStorage.setItem(LS_CFG, JSON.stringify({
       jornada: d.jornada || null,
       partidos: d.partidos || [],
@@ -506,8 +517,8 @@ async function cargar(){
     hideLoading();
   }catch(e){
     hideLoading();
-    statusEl.textContent = e.message;
-    statusEl.className = "status error";
+    statusEl.textContent=e.message;
+    statusEl.className="status error";
   }
 }
 
@@ -588,6 +599,7 @@ async function enviar(){
     /* LIMPIAR CUPÓN (solo selecciones) */
     document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
 
+    // Quita el mensaje después de 1.5s (nombre/teléfono se quedan)
     setTimeout(() => {
       statusEl.textContent = "";
       statusEl.className = "status";
