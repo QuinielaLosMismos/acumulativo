@@ -494,7 +494,7 @@ function construirMensaje(nombre, partidos){
   let msg = "🏆 *QUINIELA LOS MISMOS*\n";
   msg += `📅 *${JORNADA_TXT}*\n`;
   msg += "━━━━━━━━━━━━━━━\n";
-  msg += `👤 *${nombre}*\n\n";
+  msg += `👤 *${nombre}*\n\n`;
 
   partidos.forEach((p,i)=>{
     msg += `${i+1}) ${p.local} vs ${p.visita} — *${p.pronostico}*\n`;
@@ -609,7 +609,17 @@ async function enviar(){
       return;
     }
 
-    const mensaje = construirMensaje(payload.nombre, payload.partidos);
+    // arma mensaje usando los partidos del cupón (DOM)
+    const partidos = [...tbody.querySelectorAll("tr")].map((tr,i)=>{
+      const sel = tr.querySelector(`input[name="p${i+1}"]:checked`);
+      return {
+        local: tr.dataset.local,
+        visita: tr.dataset.visita,
+        pronostico: sel ? sel.value : ""
+      };
+    });
+
+    const mensaje = construirMensaje(payload.nombre, partidos);
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
 
     statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
