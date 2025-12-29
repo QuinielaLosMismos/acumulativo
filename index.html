@@ -41,9 +41,23 @@ body{
   flex-direction:column;
 }
 
+/* Banner + overlay de Jornada */
 .banner{
   height:210px;
   background:url("assets/banner.png") center top / cover no-repeat;
+  position:relative;
+}
+.banner-jornada{
+  position:absolute;
+  left:12px;
+  bottom:10px;
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+  letter-spacing:.04em;
+  text-transform:capitalize;
+  text-shadow:0 2px 8px rgba(0,0,0,.55);
+  user-select:none;
 }
 
 .content{
@@ -212,7 +226,9 @@ button{
 <body>
 <div class="app">
 
-  <div class="banner"></div>
+  <div class="banner">
+    <div class="banner-jornada" id="bannerJornada">Jornada</div>
+  </div>
 
   <div class="content">
 
@@ -260,22 +276,47 @@ const statusEl = document.getElementById("status");
 const telInput = document.getElementById("telefono");
 const nomInput = document.getElementById("nombre");
 
+const bannerJornadaEl = document.getElementById("bannerJornada");
+
 const modal = document.getElementById("modal");
 const modalTitle = document.getElementById("modalTitle");
 const modalMsg = document.getElementById("modalMsg");
 const modalActions = document.getElementById("modalActions");
 
 let JORNADA_TXT = "JORNADA";
+let JORNADA_NUM = null;
+
+/* ========= Nombre: MAYÚSCULAS y sin acentos (cliente) ========= */
+function sanitizeNombreClient(v){
+  return (v || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // sin acentos
+    .replace(/\s+/g," ")
+    .trim()
+    .toUpperCase();
+}
+
+// Mientras escribe:
+nomInput.addEventListener("input", () => {
+  const pos = nomInput.selectionStart || 0;
+  const before = nomInput.value;
+  const after = sanitizeNombreClient(before);
+  if (after !== before){
+    nomInput.value = after;
+    // intenta conservar cursor (mejor esfuerzo)
+    nomInput.setSelectionRange(pos, pos);
+  }
+  savePersisted();
+});
 
 /* ===== Modal helpers ===== */
 function hideModal(){
   modal.classList.remove("show");
   modalActions.innerHTML = "";
-  modalTitle.style.display = ""; // restaura por si luego se usa en alert
+  modalTitle.style.display = "";
 }
 
 function showAlert(msg){
-  modalTitle.textContent = "";       // sin título también en alert
+  modalTitle.textContent = "";
   modalTitle.style.display = "none";
   modalMsg.textContent = msg;
   modalActions.innerHTML = `<button class="btn-ghost" onclick="hideModal()">OK</button>`;
@@ -313,13 +354,14 @@ const LS_NOM="qlm_nom";
 function loadPersisted(){
   telInput.value = localStorage.getItem(LS_TEL) || "";
   nomInput.value = localStorage.getItem(LS_NOM) || "";
+  // Re-sanitiza al cargar
+  nomInput.value = sanitizeNombreClient(nomInput.value);
 }
 function savePersisted(){
   localStorage.setItem(LS_TEL, telInput.value.trim());
-  localStorage.setItem(LS_NOM, nomInput.value.trim());
+  localStorage.setItem(LS_NOM, sanitizeNombreClient(nomInput.value));
 }
 telInput.addEventListener("input", savePersisted);
-nomInput.addEventListener("input", savePersisted);
 
 /* MENSAJE WHATSAPP */
 function construirMensaje(nombre, partidos){
@@ -346,8 +388,15 @@ async function cargar(){
     const d = await r.json();
     if(!d.ok) throw new Error(d.message);
 
-    if (d.jornada) JORNADA_TXT = `JORNADA ${d.jornada}`;
-    else JORNADA_TXT = "JORNADA";
+    JORNADA_NUM = Number(d.jornada) || null;
+
+    if (JORNADA_NUM) {
+      JORNADA_TXT = `JORNADA ${JORNADA_NUM}`;
+      bannerJornadaEl.textContent = `Jornada ${JORNADA_NUM}`; // overlay en banner
+    } else {
+      JORNADA_TXT = "JORNADA";
+      bannerJornadaEl.textContent = "Jornada";
+    }
 
     tbody.innerHTML="";
     (d.partidos||[]).forEach((p,i)=>{
@@ -375,7 +424,8 @@ function limpiar(){
 /* Construir payload */
 function buildPayload(){
   const telefono = telInput.value.trim();
-  const nombre = nomInput.value.trim();
+  const nombre = sanitizeNombreClient(nomInput.value);
+
   if(!telefono) throw new Error("Ingresa teléfono");
   if(!nombre) throw new Error("Ingresa nombre");
 
@@ -398,6 +448,10 @@ async function enviar(){
   try{
     savePersisted();
     const payload = buildPayload();
+
+    // ✅ Nota: La excepción de "permitir nuevos en Jornada 2"
+    // se maneja en el Code.gs (servidor). Aquí NO bloqueamos.
+    // Si el servidor rechaza, mostramos el mensaje.
 
     // 1) intento normal
     let r = await fetch(SCRIPT_URL,{
@@ -431,20 +485,18 @@ async function enviar(){
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
 
     statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
-statusEl.className="status success";
+    statusEl.className="status success";
 
-/* LIMPIAR CUPÓN (solo selecciones) */
-document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
-// Limpia solo selecciones
-document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
+    /* LIMPIAR CUPÓN (solo selecciones) */
+    document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
 
-// Quita el mensaje después de 1.5s (nombre/teléfono se quedan)
-setTimeout(() => {
-  statusEl.textContent = "";
-  statusEl.className = "status";
-}, 1500);
+    // Quita el mensaje después de 1.5s (nombre/teléfono se quedan)
+    setTimeout(() => {
+      statusEl.textContent = "";
+      statusEl.className = "status";
+    }, 1500);
 
-window.location.href = url;
+    window.location.href = url;
 
   }catch(e){
     showAlert(e.message || String(e));
