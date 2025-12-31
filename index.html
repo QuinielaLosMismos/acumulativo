@@ -1,521 +1,913 @@
-/***********************
- * QUINIELA LOS MISMOS
- * Code.gs (ESTABLE + Reemplazo + Padrón + Admin switches + Cierre automático)
- ***********************/
-const SPREADSHEET_ID = '1KEZajlAhdP6kVflxSY5sMjArNwnvjx6Fnz75DUkTMgU';
-const SHEET_CONFIG   = 'CONFIG';
-const SHEET_RESP     = 'RESPUESTAS';
-const MAX_PARTIDOS   = 13;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Quiniela</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-// 🎨 Colores (formato RESPUESTAS)
-const COLOR_ACIERTO  = '#c6efce'; // verde claro
-const COLOR_GANADOR  = '#fff2cc'; // amarillo claro
-const COLOR_LIMPIO   = '#ffffff'; // blanco
+<style>
+:root{
+  --bg:#eaf0fb;
+  --matches:#d6e2f5;
+  --rowA:#dbe6f8;
+  --rowB:#cfdcf2;
 
-/* ========= Helpers ========= */
-function ss_(){ return SpreadsheetApp.openById(SPREADSHEET_ID); }
+  --fieldBlue:#b4c6ee;
+  --fieldBlue2:#a9bde8;
 
-function json_(obj){
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+  --text:#0f172a;
+  --danger:#b91c1c;
+
+  --pick:#5b79b8;
+  --pickDark:#425f9c;
+
+  --cardBorder: rgba(255,255,255,.75);
+  --rowBorder: rgba(255,255,255,.35);
+
+  --shadow: 0 10px 24px rgba(2,6,23,.12);
 }
 
-function col_(headers, name){
-  const idx = headers.indexOf(name);
-  if (idx < 0) throw new Error(`Falta columna: ${name}`);
-  return idx + 1;
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+html,body{ overflow-x:hidden; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
 }
 
-function parseMoney_(v){
-  return Number(String(v||'').replace(/[^0-9.]/g,'')) || 0;
+.app{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
 }
 
-// ✅ SOLO L/E/V (cualquier otra cosa = vacío)
-function normLEV_(v){
-  const s = String(v ?? '').trim().toUpperCase();
-  if (s === 'L' || s === 'E' || s === 'V') return s;
-  return '';
+/* Banner + overlay de Jornada */
+.banner{
+  height:210px;
+  background:url("assets/banner.png") center top / cover no-repeat;
+  position:relative;
+}
+.banner-jornada{
+  position:absolute;
+  left:12px;
+  bottom:10px;
+  color:#fff;
+  font-weight:900;
+  font-size:14px;
+  letter-spacing:.04em;
+  padding:4px 10px;
+  border-radius:999px;
+  background:rgba(15,23,42,.45);
+  backdrop-filter: blur(2px);
+  text-shadow:0 1px 4px rgba(0,0,0,.5);
+  user-select:none;
 }
 
-// Nombre: MAYÚSCULAS + sin acentos + espacios normalizados
-function sanitizeNombreServer_(v){
-  let s = String(v ?? '').trim();
-  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g,''); // sin acentos
-  s = s.replace(/\s+/g,' ').toUpperCase();
-  return s;
+/* Badge estado registro (abierto/cerrado) */
+.banner-status{
+  position:absolute;
+  right:12px;
+  bottom:10px;
+  color:#fff;
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:.04em;
+  padding:4px 10px;
+  border-radius:999px;
+  background:rgba(15,23,42,.45);
+  backdrop-filter: blur(2px);
+  text-shadow:0 1px 4px rgba(0,0,0,.5);
+  user-select:none;
 }
 
-// Para comparar (case/acentos/espacios)
-function normName_(v){
-  let s = String(v ?? '').trim();
-  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g,''); // sin acentos
-  s = s.replace(/\s+/g,' ').toLowerCase();
-  return s;
+.content{
+  flex:1;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
-// Interpreta jornada aunque venga como "Jornada 2" o "2"
-function parseJornada_(v){
-  const s = String(v ?? '').trim();
-  if (!s) return null;
-  const n = Number(s);
-  if (Number.isFinite(n)) return n;
-  const m = s.match(/(\d+)/);
-  return m ? Number(m[1]) : null;
+.inputs{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
 
-/* ========= CONFIG: read/write ========= */
-function readConfig_(){
-  const sh = ss_().getSheetByName(SHEET_CONFIG);
-  const lastRow = Math.max(sh.getLastRow(), 15);
-  const grid = sh.getRange(1,1,lastRow,3).getValues();
+.field{
+  background:linear-gradient(180deg, var(--fieldBlue), var(--fieldBlue2));
+  border-radius:14px;
+  padding:12px;
+  border:2px solid rgba(255,255,255,.85);
+  box-shadow:var(--shadow);
+}
 
-  const kv = {};
-  grid.forEach(r=>{
-    if (r[0]) kv[String(r[0]).toLowerCase().trim()] = r[1];
+.inline-input{
+  width:100%;
+  border:none;
+  outline:none;
+  background:transparent;
+  font-size:1rem;
+  color:var(--text);
+}
+
+/* Admin panel */
+.admin{
+  background:linear-gradient(180deg, var(--rowA), var(--rowB));
+  border-radius:16px;
+  border:2px solid rgba(255,255,255,.85);
+  box-shadow:var(--shadow);
+  padding:12px;
+  display:none;
+}
+.admin.show{ display:block; }
+
+.admin-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.admin-title{
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  font-size:.86rem;
+  opacity:.85;
+}
+
+.switch-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 10px;
+  border-radius:12px;
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.8);
+}
+.switch-row + .switch-row{ margin-top:10px; }
+.switch-label{
+  font-weight:900;
+  font-size:.9rem;
+}
+.switch-sub{
+  font-weight:700;
+  font-size:.78rem;
+  opacity:.7;
+  margin-top:2px;
+}
+.switch-left{ display:flex; flex-direction:column; }
+
+.toggle{
+  appearance:none;
+  width:46px;
+  height:28px;
+  border-radius:999px;
+  background:rgba(15,23,42,.18);
+  position:relative;
+  outline:none;
+  cursor:pointer;
+  transition: background .18s ease;
+  flex:0 0 auto;
+}
+.toggle::after{
+  content:"";
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#fff;
+  position:absolute;
+  top:3px;
+  left:3px;
+  transition: transform .18s ease;
+  box-shadow:0 8px 16px rgba(2,6,23,.16);
+}
+.toggle:checked{
+  background: rgba(66,95,156,.85);
+}
+.toggle:checked::after{
+  transform: translateX(18px);
+}
+
+.admin-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  margin-top:10px;
+}
+.btn-admin{
+  border:none;
+  border-radius:999px;
+  padding:9px 14px;
+  font-size:.85rem;
+  font-weight:900;
+  cursor:pointer;
+  background:#fff;
+  color:var(--pickDark);
+}
+.btn-admin.primary{
+  background:var(--pickDark);
+  color:#fff;
+}
+
+/* Matches */
+.matches{
+  position:relative;
+  flex:0 0 auto;
+  background:var(--matches);
+  border-radius:16px;
+  overflow:hidden;
+  border:2px solid var(--cardBorder);
+  box-shadow:var(--shadow);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.92rem;
+  table-layout:fixed;
+}
+
+td{ padding:10px 6px; }
+tbody tr:nth-child(odd){background:var(--rowA)}
+tbody tr:nth-child(even){background:var(--rowB)}
+tbody tr{ border-top:1px solid var(--rowBorder); }
+
+.pick{ width:56px; text-align:center; } /* ✅ MÁS ANCHO */
+.pick label{position:relative;display:inline-block}
+.pick input{position:absolute;opacity:0}
+
+.pick span{
+  display:inline-flex;
+  width:48px;              /* ✅ MÁS GRANDE */
+  height:42px;             /* ✅ MÁS GRANDE */
+  align-items:center;
+  justify-content:center;
+  border-radius:14px;
+  border:2px solid var(--pick);
+  color:var(--pick);
+  font-weight:900;
+  font-size:1.05rem;
+
+  transition: transform .12s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease;
+  will-change: transform;
+}
+.pick input:checked + span{
+  background:var(--pickDark);
+  color:#fff;
+  transform: scale(1.06);
+  box-shadow: 0 10px 20px rgba(2,6,23,.18);
+}
+.pick label:active span{
+  transform: scale(.96);
+}
+
+.teamCell{ width:33%; text-align:center; overflow:hidden; }
+.team{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  font-weight:900;
+  text-transform:uppercase;
+  font-size:.84rem;
+  overflow:hidden;
+}
+.team img{
+  width:34px;
+  height:34px;
+  object-fit:contain;
+}
+
+.footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.status{
+  min-height:1.2em;
+  font-size:.85rem;
+}
+.status.error{color:var(--danger)}
+.status.success{color:#166534}
+
+.actions{ display:flex; gap:10px; }
+button{
+  border:none;
+  border-radius:999px;
+  padding:10px 18px;
+  font-size:.9rem;
+  font-weight:900;
+  cursor:pointer;
+}
+.btn-clear{ background:#fff; color:var(--pickDark); }
+.btn-send{ background:var(--pickDark); color:#fff; }
+.btn-send:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+/* Modal */
+.modal{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  background:rgba(2,6,23,.28);
+  z-index:20;
+}
+.modal.show{ display:flex; }
+
+.modal-card{
+  width:min(420px, 95%);
+  background:linear-gradient(180deg, var(--rowA), var(--rowB));
+  border:2px solid rgba(255,255,255,.85);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:14px;
+}
+
+.modal-title{
+  font-weight:900;
+  letter-spacing:.04em;
+  margin:0 0 8px 0;
+  text-transform:uppercase;
+  font-size:.9rem;
+  color:rgba(15,23,42,.85);
+}
+
+.modal-msg{
+  margin:0 0 12px 0;
+  line-height:1.35;
+  font-weight:700;
+  color:rgba(15,23,42,.9);
+}
+
+.modal-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+}
+
+.btn-ghost{ background:#fff; color:var(--pickDark); }
+.btn-primary{ background:var(--pickDark); color:#fff; }
+
+/* Loading */
+.loading{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(2,6,23,.35);
+  z-index:50;
+}
+.loading.show{ display:flex; }
+.loading-card{
+  width:min(420px, 92%);
+  background:rgba(255,255,255,.92);
+  border:2px solid rgba(255,255,255,.85);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:14px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.spinner{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:3px solid rgba(66,95,156,.25);
+  border-top-color: rgba(66,95,156,1);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.loading-text{
+  font-weight:800;
+  color:rgba(15,23,42,.85);
+}
+
+/* Responsive */
+@media (max-width:420px){
+  .banner{ height:160px; }
+  .content{ padding:10px; gap:10px; }
+
+  td{ padding:8px 4px; }
+  table{ font-size:.86rem; }
+
+  .pick{ width:50px; }
+  .pick span{ width:44px; height:38px; border-radius:12px; font-size:1rem; }
+
+  .team{ font-size:.78rem; }
+  .team img{ width:28px; height:28px; }
+
+  button{ padding:9px 14px; font-size:.85rem; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="banner">
+    <div class="banner-jornada" id="bannerJornada">Jornada</div>
+    <div class="banner-status" id="bannerStatus">Cargando…</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Admin (oculto por defecto) -->
+    <div class="admin" id="adminPanel">
+      <div class="admin-head">
+        <div class="admin-title">Administrador</div>
+        <button class="btn-admin" id="btnAdminClose" type="button">Cerrar</button>
+      </div>
+
+      <div class="switch-row">
+        <div class="switch-left">
+          <div class="switch-label">Permitir nuevos participantes</div>
+          <div class="switch-sub">Si está activo, se aceptan nombres nuevos aunque no estén registrados.</div>
+        </div>
+        <input class="toggle" id="swAllowNew" type="checkbox" />
+      </div>
+
+      <div class="switch-row">
+        <div class="switch-left">
+          <div class="switch-label">Cierre automático de registro</div>
+          <div class="switch-sub">Si está activo, se cierra en la fecha/hora configurada en CONFIG.</div>
+        </div>
+        <input class="toggle" id="swCloseEnabled" type="checkbox" />
+      </div>
+
+      <div class="switch-row">
+        <div class="switch-left">
+          <div class="switch-label">Fecha/hora de cierre</div>
+          <div class="switch-sub">Solo se usa si el cierre automático está activo.</div>
+        </div>
+        <input id="closeAtInput" class="inline-input" type="text" placeholder="YYYY-MM-DD HH:MM" style="max-width:170px;background:transparent;" />
+      </div>
+
+      <div class="admin-actions">
+        <button class="btn-admin" id="btnAdminRefresh" type="button">Recargar</button>
+        <button class="btn-admin primary" id="btnAdminSave" type="button">Guardar</button>
+      </div>
+    </div>
+
+    <div class="inputs">
+      <div class="field">
+        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono">
+      </div>
+      <div class="field">
+        <input id="nombre" class="inline-input" type="text" placeholder="Nombre">
+      </div>
+    </div>
+
+    <div class="matches" id="matches">
+      <table>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div class="modal" id="modal">
+        <div class="modal-card">
+          <div class="modal-title" id="modalTitle"></div>
+          <p class="modal-msg" id="modalMsg"></p>
+          <div class="modal-actions" id="modalActions"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div id="status" class="status"></div>
+      <div class="actions">
+        <button class="btn-clear" onclick="limpiar()">Limpiar</button>
+        <button class="btn-send" id="btnSend" onclick="enviar()">Enviar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="loading" id="loading">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Cargando…</div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
+const WHATSAPP_NUMBER = "523313449844";
+
+const tbody = document.getElementById("tbody");
+const statusEl = document.getElementById("status");
+const telInput = document.getElementById("telefono");
+const nomInput = document.getElementById("nombre");
+const btnSend = document.getElementById("btnSend");
+
+const bannerJornadaEl = document.getElementById("bannerJornada");
+const bannerStatusEl = document.getElementById("bannerStatus");
+
+const modal = document.getElementById("modal");
+const modalTitle = document.getElementById("modalTitle");
+const modalMsg = document.getElementById("modalMsg");
+const modalActions = document.getElementById("modalActions");
+
+const loading = document.getElementById("loading");
+const loadingText = document.getElementById("loadingText");
+
+/* Admin UI */
+const adminPanel = document.getElementById("adminPanel");
+const btnAdminClose = document.getElementById("btnAdminClose");
+const btnAdminSave = document.getElementById("btnAdminSave");
+const btnAdminRefresh = document.getElementById("btnAdminRefresh");
+const swAllowNew = document.getElementById("swAllowNew");
+const swCloseEnabled = document.getElementById("swCloseEnabled");
+const closeAtInput = document.getElementById("closeAtInput");
+
+let JORNADA_TXT = "JORNADA";
+let JORNADA_NUM = null;
+
+let serverCfg = null;
+
+/* ===== Loading ===== */
+function showLoading(text="Cargando…"){
+  loadingText.textContent = text;
+  loading.classList.add("show");
+}
+function hideLoading(){
+  loading.classList.remove("show");
+}
+
+/* ===== Nombre: MAYÚSCULAS y sin acentos ===== */
+function sanitizeNombreClient(v){
+  return (v || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/\s+/g," ")
+    .trim()
+    .toUpperCase();
+}
+nomInput.addEventListener("input", () => {
+  const pos = nomInput.selectionStart || 0;
+  const before = nomInput.value;
+  const after = sanitizeNombreClient(before);
+  if (after !== before){
+    nomInput.value = after;
+    nomInput.setSelectionRange(pos, pos);
+  }
+  savePersisted();
+});
+
+/* ===== Modal ===== */
+function hideModal(){
+  modal.classList.remove("show");
+  modalActions.innerHTML = "";
+  modalTitle.style.display = "";
+}
+function showAlert(msg){
+  modalTitle.textContent = "";
+  modalTitle.style.display = "none";
+  modalMsg.textContent = msg;
+  modalActions.innerHTML = `<button class="btn-ghost" onclick="hideModal()">OK</button>`;
+  modal.classList.add("show");
+}
+function showConfirm(msg){
+  return new Promise(resolve=>{
+    modalTitle.textContent = "";
+    modalTitle.style.display = "none";
+
+    modalMsg.textContent = msg;
+    modalActions.innerHTML = `
+      <button class="btn-ghost" id="mNo">NO</button>
+      <button class="btn-primary" id="mYes">SI</button>
+    `;
+    modal.classList.add("show");
+
+    document.getElementById("mNo").onclick = () => { hideModal(); resolve(false); };
+    document.getElementById("mYes").onclick = () => { hideModal(); resolve(true); };
   });
-
-  const subtitulo = String(kv['subtitulo'] || '');
-  const m = subtitulo.match(/(\d+)/);
-  const jornada = m ? Number(m[1]) : null;
-
-  const partidos = [];
-  const resultados = [];
-
-  // Partidos desde fila 10: A=Local, B=Visitante, C=Resultado
-  for (let r=10; r<=lastRow; r++){
-    const local  = String(sh.getRange(r,1).getValue() || '').trim();
-    const visita = String(sh.getRange(r,2).getValue() || '').trim();
-    const res    = normLEV_(sh.getRange(r,3).getValue());
-
-    if (!local && !visita) continue;
-
-    partidos.push({ local, visita });
-    resultados.push(res);
-  }
-
-  const allowNew     = String(kv['allownew'] || '').toUpperCase();       // SI/NO
-  const closeEnabled = String(kv['closeenabled'] || '').toUpperCase();   // SI/NO
-  const closeAt      = String(kv['closeat'] || '');                      // "YYYY-MM-DD HH:MM"
-  const adminKey     = String(kv['adminkey'] || '');                     // opcional
-
-  return {
-    activo: String(kv['activo'] || '').toUpperCase(),
-    jornada,
-    premioSemanal: parseMoney_(kv['premio semanal']),
-    partidos,
-    resultados,
-
-    // ✅ nuevos
-    allowNew: (allowNew === 'SI' ? 'SI' : 'NO'),
-    closeEnabled: (closeEnabled === 'SI' ? 'SI' : 'NO'),
-    closeAt,
-    adminKey,
-  };
 }
 
-// Escribe/crea llave en CONFIG (col A=key, col B=value)
-function writeConfigKV_(key, value){
-  const sh = ss_().getSheetByName(SHEET_CONFIG);
-  const lastRow = Math.max(sh.getLastRow(), 15);
-  const rng = sh.getRange(1,1,lastRow,2).getValues(); // A:B
-  const k = String(key || '').toLowerCase().trim();
-
-  for (let i=0; i<rng.length; i++){
-    const a = String(rng[i][0] || '').toLowerCase().trim();
-    if (a === k){
-      sh.getRange(i+1, 2).setValue(value);
-      return;
-    }
-  }
-  // no existe: agregar al final
-  sh.appendRow([k, value]);
+/* ===== Logos ===== */
+function logo(team){
+  let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase().replace(/[^a-z0-9]/g,"");
+  return "assets/"+s+".png";
 }
 
-/* ========= RESPUESTAS: headers + fila 2 ========= */
-function syncRespuestas_(){
-  const sh = ss_().getSheetByName(SHEET_RESP);
+/* ===== Persistencia ===== */
+const LS_TEL="qlm_tel";
+const LS_NOM="qlm_nom";
+function loadPersisted(){
+  telInput.value = localStorage.getItem(LS_TEL) || "";
+  nomInput.value = localStorage.getItem(LS_NOM) || "";
+  nomInput.value = sanitizeNombreClient(nomInput.value);
+}
+function savePersisted(){
+  localStorage.setItem(LS_TEL, telInput.value.trim());
+  localStorage.setItem(LS_NOM, sanitizeNombreClient(nomInput.value));
+}
+telInput.addEventListener("input", savePersisted);
 
-  // ✅ orden: Teléfono antes de Nombre (como lo querías)
-  const headers = [
-    'Jornada',          // A
-    'Timestamp',        // B
-    'Teléfono',         // C
-    'Nombre',           // D
-    ...Array.from({length: MAX_PARTIDOS}, (_,i)=>`p${i+1}`), // E-Q
-    'Aciertos',         // R
-    'NumGanadores',     // S
-    'PremioPorGanador', // T
-  ];
-
-  sh.getRange(1,1,1,headers.length).setValues([headers]);
-  sh.setFrozenRows(1);
-
-  if (sh.getLastRow() < 2) sh.insertRowAfter(1);
-
-  const cfg = readConfig_();
-  const row2 = new Array(headers.length).fill('');
-
-  const start = headers.indexOf('p1');
-  cfg.partidos.forEach((p,i)=>{
-    if (i < MAX_PARTIDOS) row2[start + i] = `${p.local} vs ${p.visita}`;
-  });
-
-  sh.getRange(2,1,1,headers.length).setValues([row2]);
+/* Cache config para pintar rápido */
+const LS_CFG="qlm_cfg_cache_v2";
+function cacheWrite(cfg){
+  localStorage.setItem(LS_CFG, JSON.stringify({ cfg, ts: Date.now() }));
+}
+function cacheRead(){
+  try{
+    const obj = JSON.parse(localStorage.getItem(LS_CFG) || "null");
+    return obj?.cfg || null;
+  }catch(_){ return null; }
 }
 
-/* ========= Trigger (CONFIG) ========= */
-function onEditConfig_(e){
-  if (e.range.getSheet().getName() !== SHEET_CONFIG) return;
-  syncRespuestas_();
-}
+/* ===== Registro abierto/cerrado ===== */
+function parseCloseAt(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
 
-function instalarTriggerConfig(){
-  ScriptApp.getProjectTriggers().forEach(t=>{
-    if (t.getHandlerFunction() === 'onEditConfig_') ScriptApp.deleteTrigger(t);
-  });
-
-  ScriptApp.newTrigger('onEditConfig_')
-    .forSpreadsheet(SPREADSHEET_ID)
-    .onEdit()
-    .create();
-
-  syncRespuestas_();
-}
-
-/* ========= Buscar fila por nombre+jornada (para reemplazar) ========= */
-function filaPorNombreYJornada_(nombre, jornada){
-  const sh = ss_().getSheetByName(SHEET_RESP);
-  const lastRow = sh.getLastRow();
-  if (lastRow < 3) return null;
-
-  const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
-  const cNom = col_(headers,'Nombre');
-  const cJor = col_(headers,'Jornada');
-
-  const nombres = sh.getRange(3, cNom, lastRow-2, 1).getValues().flat();
-  const jornadas = sh.getRange(3, cJor, lastRow-2, 1).getValues().flat();
-
-  const targetName = normName_(nombre);
-  const targetJ = Number(jornada);
-
-  for (let i=0; i<nombres.length; i++){
-    if (normName_(nombres[i]) !== targetName) continue;
-    const j = parseJornada_(jornadas[i]);
-    if (j === targetJ) return 3 + i;
-  }
-  return null;
-}
-
-/* ========= Padrón: existe en una o varias jornadas ========= */
-function nombreExisteEnJornadas_(nombre, jornadasPermitidas){
-  const sh = ss_().getSheetByName(SHEET_RESP);
-  const lastRow = sh.getLastRow();
-  if (lastRow < 3) return false;
-
-  const setJ = new Set((jornadasPermitidas || []).map(n=>Number(n)));
-  const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
-  const cNom = col_(headers,'Nombre');
-  const cJor = col_(headers,'Jornada');
-
-  const target = normName_(nombre);
-  const nombres = sh.getRange(3, cNom, lastRow-2, 1).getValues().flat();
-  const jornadas = sh.getRange(3, cJor, lastRow-2, 1).getValues().flat();
-
-  for (let i=0; i<nombres.length; i++){
-    const j = parseJornada_(jornadas[i]);
-    if (!Number.isFinite(j)) continue;
-    if (!setJ.has(j)) continue;
-    if (normName_(nombres[i]) === target) return true;
-  }
-  return false;
-}
-
-/* ========= Cierre automático ========= */
-function parseCloseAt_(s){
-  const v = String(s || '').trim();
-  if (!v) return null;
-
-  // Soporta: "YYYY-MM-DD HH:MM"
-  const m = v.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
-  if (m){
+  // Soporta "YYYY-MM-DD HH:MM"
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
+  if(m){
     const iso = `${m[1]}T${m[2]}:00`;
-    const d = new Date(iso); // en Apps Script usa TZ del script/hoja
+    const d = new Date(iso);
     return isNaN(d.getTime()) ? null : d;
   }
-  // ISO directo
-  const d = new Date(v);
+
+  // ISO
+  const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
 
-function registroAbierto_(cfg){
-  if (String(cfg.activo || '').toUpperCase() !== 'SI') return false;
+function computeRegistroAbierto(cfg){
+  // Base: activo
+  const activo = String(cfg?.activo || "").toUpperCase();
+  if (activo && activo !== "SI") return { open:false, reason:"Registro cerrado" };
 
-  if (String(cfg.closeEnabled || '').toUpperCase() === 'SI'){
-    const d = parseCloseAt_(cfg.closeAt);
-    if (d){
+  // Cierre automático (si viene del servidor)
+  const closeEnabled = String(cfg?.closeEnabled || "").toUpperCase() === "SI";
+  if (closeEnabled){
+    const closeAt = parseCloseAt(cfg?.closeAt);
+    if (closeAt){
       const now = new Date();
-      if (now.getTime() >= d.getTime()) return false;
+      if (now.getTime() >= closeAt.getTime()){
+        return { open:false, reason:"Registro cerrado" };
+      }
+      return { open:true, reason:"Abierto" };
     }
   }
-  return true;
+
+  return { open:true, reason:"Abierto" };
 }
 
-/* ========= WebApp ========= */
-function doGet(e){
-  try{
-    if (e?.parameter?.action !== 'getConfig') return json_({ ok:true });
+function applyRegistroUI(cfg){
+  const st = computeRegistroAbierto(cfg);
+  bannerStatusEl.textContent = st.open ? "Registro abierto" : "Registro cerrado";
+  btnSend.disabled = !st.open;
 
-    syncRespuestas_();
-
-    const cfg = readConfig_();
-    // devolver solo lo necesario al frontend
-    return json_({
-      ok:true,
-      activo: cfg.activo,
-      jornada: cfg.jornada,
-      premioSemanal: cfg.premioSemanal,
-      partidos: cfg.partidos,
-
-      // ✅ admin toggles + cierre
-      allowNew: cfg.allowNew,
-      closeEnabled: cfg.closeEnabled,
-      closeAt: cfg.closeAt,
-    });
-  }catch(err){
-    return json_({ ok:false, message:String(err) });
+  if (!st.open){
+    statusEl.textContent = "Registro cerrado.";
+    statusEl.className = "status error";
+  }else{
+    // no borres mensajes existentes si el usuario ya vio uno
+    if (statusEl.textContent === "Registro cerrado."){
+      statusEl.textContent = "";
+      statusEl.className = "status";
+    }
   }
 }
 
-function doPost(e){
-  try{
-    const data = JSON.parse(e.postData.contents || '{}');
-
-    // ✅ ADMIN SET (desde el panel del HTML)
-    if (String(data.action || '') === 'adminSet'){
-      const cfg = readConfig_();
-
-      // seguridad opcional: si hay adminKey en CONFIG, exigirlo
-      const requiredKey = String(cfg.adminKey || '').trim();
-      if (requiredKey){
-        const got = String(data.adminKey || '').trim();
-        if (!got || got !== requiredKey){
-          return json_({ ok:false, message:'AdminKey inválida.' });
-        }
-      }
-
-      const allowNew = String(data.allowNew || '').toUpperCase() === 'SI' ? 'SI' : 'NO';
-      const closeEnabled = String(data.closeEnabled || '').toUpperCase() === 'SI' ? 'SI' : 'NO';
-      const closeAt = String(data.closeAt || '').trim();
-
-      writeConfigKV_('allownew', allowNew);
-      writeConfigKV_('closeenabled', closeEnabled);
-      writeConfigKV_('closeat', closeAt);
-
-      // refrescar fila 2 si cambiaste algo relevante
-      syncRespuestas_();
-
-      return json_({ ok:true });
-    }
-
-    // ===== Envío normal de quiniela =====
-    const nombreRaw = String(data.nombre || '').trim();
-    const tel       = String(data.telefono || '').trim();
-    const replace   = data.replace === true;
-
-    const nombre = sanitizeNombreServer_(nombreRaw);
-
-    if (!nombre) return json_({ ok:false, message:'Falta nombre' });
-    if (!tel)    return json_({ ok:false, message:'Falta teléfono' });
-
-    const cfg = readConfig_();
-    if (!cfg.jornada) return json_({ ok:false, message:'Jornada no definida' });
-
-    // ✅ cierre automático / activo
-    if (!registroAbierto_(cfg)){
-      return json_({ ok:false, message:'Registro cerrado' });
-    }
-
-    // ✅ padrón (solo si NO se permiten nuevos)
-    const allowNew = String(cfg.allowNew || '').toUpperCase() === 'SI';
-    if (!allowNew){
-      if (cfg.jornada === 2){
-        // J2: deben existir en J1
-        if (!nombreExisteEnJornadas_(nombre, [1])){
-          return json_({
-            ok:false,
-            message:'Este nombre no está registrado desde la Jornada 1. Usa el mismo nombre con el que participaste la primera vez.'
-          });
-        }
-      } else if (cfg.jornada >= 3){
-        // J3+: deben existir en J1 o J2
-        if (!nombreExisteEnJornadas_(nombre, [1,2])){
-          return json_({
-            ok:false,
-            message:'Este nombre no está registrado desde la Jornada 1 o 2. Usa el mismo nombre con el que participaste al inicio.'
-          });
-        }
-      }
-      // J1: siempre permite (no entra aquí)
-    }
-
-    // validación picks
-    if (!Array.isArray(data.partidos) || data.partidos.length !== cfg.partidos.length){
-      return json_({ ok:false, message:'Selecciones incompletas' });
-    }
-
-    const sh = ss_().getSheetByName(SHEET_RESP);
-    const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
-
-    const fila = filaPorNombreYJornada_(nombre, cfg.jornada);
-
-    // existe y no pidió reemplazar → preguntar
-    if (fila && !replace){
-      return json_({
-        ok:false,
-        code:'DUPLICATE',
-        message:'Ya existe una quiniela con este nombre en esta jornada. ¿Quieres reemplazarla?'
-      });
-    }
-
-    const row = new Array(headers.length).fill('');
-    row[col_(headers,'Jornada')-1]    = cfg.jornada;
-    row[col_(headers,'Timestamp')-1]  = new Date();
-    row[col_(headers,'Nombre')-1]     = nombre;
-    row[col_(headers,'Teléfono')-1]   = tel;
-
-    data.partidos.forEach((p,i)=>{
-      if (i < MAX_PARTIDOS){
-        row[col_(headers,`p${i+1}`)-1] = normLEV_(p.pronostico);
-      }
-    });
-
-    if (fila){
-      sh.getRange(fila, 1, 1, row.length).setValues([row]);
-    } else {
-      sh.appendRow(row);
-    }
-
-    return json_({ ok:true });
-
-  }catch(err){
-    return json_({ ok:false, message:String(err) });
+/* ===== Banner/jornada ===== */
+function setBanner(j){
+  const n = Number(j);
+  if (Number.isFinite(n) && n > 0){
+    JORNADA_NUM = n;
+    JORNADA_TXT = `JORNADA ${n}`;
+    bannerJornadaEl.textContent = `Jornada ${n}`;
+  } else {
+    JORNADA_NUM = null;
+    JORNADA_TXT = "JORNADA";
+    bannerJornadaEl.textContent = "Jornada";
   }
 }
 
-/* ========= Formato visual: aciertos + ganadores (solo jornada actual) ========= */
-function aplicarFormatoJornada_(cfg){
-  const sh = ss_().getSheetByName(SHEET_RESP);
-  const lastRow = sh.getLastRow();
-  const lastCol = sh.getLastColumn();
-  if (lastRow < 3) return;
-
-  const values = sh.getRange(1,1,lastRow,lastCol).getValues();
-  const h = values[0];
-
-  const cJ  = col_(h,'Jornada');
-  const cA  = col_(h,'Aciertos');
-  const cP1 = col_(h,'p1');
-
-  const numPicks = Math.min(cfg.partidos.length, MAX_PARTIDOS);
-
-  // max aciertos jornada actual
-  let maxA = -1;
-  for (let r=2; r<values.length; r++){
-    const j = parseJornada_(values[r][cJ-1]);
-    if (j === null || j !== cfg.jornada) continue;
-    const ac = Number(values[r][cA-1]) || 0;
-    if (ac > maxA) maxA = ac;
-  }
-  if (maxA < 0) maxA = 0;
-
-  const dataRows = lastRow - 2;
-  const rangoDatos = sh.getRange(3,1,dataRows,lastCol);
-  const bgs = rangoDatos.getBackgrounds();
-
-  for (let rr=0; rr<dataRows; rr++){
-    const r = rr + 2; // índice en values
-    const j = parseJornada_(values[r][cJ-1]);
-    if (j === null || j !== cfg.jornada) continue;
-
-    const ac = Number(values[r][cA-1]) || 0;
-    const esGanador = (ac === maxA);
-
-    // limpiar fila de esa jornada
-    for (let c=0; c<lastCol; c++) bgs[rr][c] = COLOR_LIMPIO;
-
-    // resaltar ganadores (fila completa)
-    if (esGanador){
-      for (let c=0; c<lastCol; c++) bgs[rr][c] = COLOR_GANADOR;
-    }
-
-    // aciertos en verde (ganen o no)
-    for (let i=0; i<numPicks; i++){
-      const pick = normLEV_(values[r][(cP1-1)+i]);
-      const res  = normLEV_(cfg.resultados[i]);
-      if (pick && res && pick === res){
-        bgs[rr][(cP1-1)+i] = COLOR_ACIERTO;
-      }
-    }
-  }
-
-  rangoDatos.setBackgrounds(bgs);
+/* ===== Render partidos ===== */
+function renderPartidos(partidos){
+  tbody.innerHTML="";
+  (partidos||[]).forEach((p,i)=>{
+    tbody.innerHTML += `
+    <tr data-local="${p.local}" data-visita="${p.visita}">
+      <td class="pick"><label><input type="radio" name="p${i+1}" value="L"><span>L</span></label></td>
+      <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
+      <td class="pick"><label><input type="radio" name="p${i+1}" value="E"><span>E</span></label></td>
+      <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
+      <td class="pick"><label><input type="radio" name="p${i+1}" value="V"><span>V</span></label></td>
+    </tr>`;
+  });
 }
 
-/* ========= Calificar jornada actual ========= */
-function calificarJornadaActual(){
-  const cfg = readConfig_();
-  if (!cfg.jornada) throw new Error('Jornada no definida en CONFIG (Subtitulo).');
+/* ===== WhatsApp ===== */
+function construirMensaje(nombre, partidos){
+  let msg = "🏆 *QUINIELA LOS MISMOS*\n";
+  msg += `📅 *${JORNADA_TXT}*\n`;
+  msg += "━━━━━━━━━━━━━━━\n";
+  msg += `👤 *${nombre}*\n\n`;
 
-  const sh = ss_().getSheetByName(SHEET_RESP);
-  const values = sh.getDataRange().getValues();
-  const h = values[0];
-
-  const cJ  = col_(h,'Jornada');
-  const cA  = col_(h,'Aciertos');
-  const cNG = col_(h,'NumGanadores');
-  const cPP = col_(h,'PremioPorGanador');
-
-  let maxA = -1;
-  const filas = [];
-
-  for (let r=2; r<values.length; r++){ // desde fila 3
-    const j = parseJornada_(values[r][cJ-1]);
-    if (j === null || j !== cfg.jornada) continue;
-
-    let ac = 0;
-    for (let i=0; i<cfg.partidos.length && i<MAX_PARTIDOS; i++){
-      const pick = normLEV_(values[r][col_(h,`p${i+1}`)-1]);
-      const res  = normLEV_(cfg.resultados[i]);
-      if (pick && res && pick === res) ac++;
-    }
-
-    values[r][cA-1] = ac;
-    filas.push(r);
-    if (ac > maxA) maxA = ac;
-  }
-
-  const ganadores = filas.filter(r => Number(values[r][cA-1]) === maxA);
-  const porGanador = ganadores.length ? (cfg.premioSemanal / ganadores.length) : 0;
-
-  // ✅ solo llenar NG/PP en filas ganadoras (las demás quedan en blanco)
-  filas.forEach(r=>{
-    if (Number(values[r][cA-1]) === maxA){
-      values[r][cNG-1] = ganadores.length;
-      values[r][cPP-1] = porGanador;
-    } else {
-      values[r][cNG-1] = '';
-      values[r][cPP-1] = '';
-    }
+  partidos.forEach((p,i)=>{
+    msg += `${i+1}) ${p.local} vs ${p.visita} — *${p.pronostico}*\n`;
   });
 
-  sh.getRange(1,1,values.length,values[0].length).setValues(values);
+  msg += "\n━━━━━━━━━━━━━━━";
+  msg += "\n✅ *Quiniela enviada y registrada*";
+  return msg.trim();
+}
 
-  // ordenar por jornada desc y aciertos desc
-  if (sh.getLastRow() > 2){
-    sh.getRange(3,1,sh.getLastRow()-2,sh.getLastColumn())
-      .sort([{column:cJ, ascending:false}, {column:cA, ascending:false}]);
+/* ===== Admin UI show/hide ===== */
+/* Abre admin con doble tap en el badge de status */
+let lastTap = 0;
+bannerStatusEl.addEventListener("click", ()=>{
+  const now = Date.now();
+  if (now - lastTap < 350){
+    adminPanel.classList.add("show");
+    // precarga values
+    if (serverCfg){
+      swAllowNew.checked = String(serverCfg.allowNew||"").toUpperCase() === "SI";
+      swCloseEnabled.checked = String(serverCfg.closeEnabled||"").toUpperCase() === "SI";
+      closeAtInput.value = serverCfg.closeAt || "";
+    }
+  }
+  lastTap = now;
+});
+btnAdminClose.addEventListener("click", ()=> adminPanel.classList.remove("show"));
+btnAdminRefresh.addEventListener("click", ()=> cargar(true));
+
+btnAdminSave.addEventListener("click", async ()=>{
+  try{
+    showLoading("Guardando ajustes…");
+    // Esto requiere implementación en Code.gs: action=adminSet
+    const payload = {
+      action: "adminSet",
+      allowNew: swAllowNew.checked ? "SI" : "NO",
+      closeEnabled: swCloseEnabled.checked ? "SI" : "NO",
+      closeAt: closeAtInput.value.trim()
+    };
+
+    const r = await fetch(SCRIPT_URL,{
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    const d = JSON.parse(await r.text());
+    if(!d.ok) throw new Error(d.message || "No se pudo guardar");
+
+    hideLoading();
+    adminPanel.classList.remove("show");
+    await cargar(true);
+    showAlert("Listo. Ajustes guardados.");
+  }catch(e){
+    hideLoading();
+    showAlert(String(e.message || e));
+  }
+});
+
+/* ===== CARGAR ===== */
+async function cargar(force=false){
+  loadPersisted();
+
+  if (!force){
+    const cached = cacheRead();
+    if (cached && Array.isArray(cached.partidos) && cached.partidos.length){
+      serverCfg = cached;
+      setBanner(cached.jornada);
+      renderPartidos(cached.partidos);
+      applyRegistroUI(cached);
+    }
   }
 
-  // formato visual
-  aplicarFormatoJornada_(cfg);
+  showLoading("Cargando quiniela…");
+  try{
+    const r = await fetch(SCRIPT_URL+"?action=getConfig");
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.message);
+
+    serverCfg = d;
+
+    setBanner(d.jornada);
+    renderPartidos(d.partidos || []);
+    applyRegistroUI(d);
+
+    cacheWrite(d);
+    hideLoading();
+  }catch(e){
+    hideLoading();
+    statusEl.textContent = e.message;
+    statusEl.className = "status error";
+    bannerStatusEl.textContent = "Error";
+  }
 }
+
+/* LIMPIAR */
+function limpiar(){
+  document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
+  statusEl.textContent="";
+  statusEl.className="status";
+}
+
+/* Payload */
+function buildPayload(){
+  const telefono = telInput.value.trim();
+  const nombre = sanitizeNombreClient(nomInput.value);
+
+  if(!telefono) throw new Error("Ingresa teléfono");
+  if(!nombre) throw new Error("Ingresa nombre");
+
+  const st = computeRegistroAbierto(serverCfg || {});
+  if (!st.open) throw new Error("Registro cerrado.");
+
+  const partidos=[];
+  [...tbody.querySelectorAll("tr")].forEach((tr,i)=>{
+    const sel = tr.querySelector(`input[name="p${i+1}"]:checked`);
+    if(!sel) throw new Error("Faltan selecciones");
+    partidos.push({
+      local: tr.dataset.local,
+      visita: tr.dataset.visita,
+      pronostico: sel.value
+    });
+  });
+
+  return { telefono, nombre, partidos };
+}
+
+/* ENVIAR */
+async function enviar(){
+  try{
+    savePersisted();
+    const payload = buildPayload();
+
+    showLoading("Enviando quiniela…");
+
+    let r = await fetch(SCRIPT_URL,{
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    let d = JSON.parse(await r.text());
+
+    if(!d.ok && d.code === "DUPLICATE"){
+      hideLoading();
+      const ok = await showConfirm("Ya existe una quiniela con este nombre en esta jornada. ¿Quieres reemplazarla?");
+      if(!ok) return;
+
+      showLoading("Reemplazando quiniela…");
+      r = await fetch(SCRIPT_URL,{
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({ ...payload, replace:true })
+      });
+
+      d = JSON.parse(await r.text());
+    }
+
+    hideLoading();
+
+    if(!d.ok){
+      showAlert(d.message || "Error al enviar");
+      return;
+    }
+
+    const mensaje = construirMensaje(payload.nombre, payload.partidos);
+    const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
+
+    statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
+    statusEl.className="status success";
+
+    document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
+
+    setTimeout(() => {
+      statusEl.textContent = "";
+      statusEl.className = "status";
+    }, 1500);
+
+    window.location.href = url;
+
+  }catch(e){
+    hideLoading();
+    showAlert(e.message || String(e));
+  }
+}
+
+cargar();
+</script>
+</body>
+</html>
