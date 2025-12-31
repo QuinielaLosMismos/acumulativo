@@ -1,648 +1,675 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<title>Quiniela</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+/***********************
+ * QUINIELA LOS MISMOS
+ * Code.gs (ESTABLE + Reemplazo + Padrón J1+J2 desde J3 + Nombre MAYÚSCULAS sin acentos
+ *          + Formato Aciertos/Ganadores + Banner + Acumulado PODIO con empates)
+ ***********************/
+const SPREADSHEET_ID = '1KEZajlAhdP6kVflxSY5sMjArNwnvjx6Fnz75DUkTMgU';
+const SHEET_CONFIG   = 'CONFIG';
+const SHEET_RESP     = 'RESPUESTAS';
+const MAX_PARTIDOS   = 13;
 
-<style>
-:root{
-  --bg:#eaf0fb;
-  --matches:#d6e2f5;
-  --rowA:#dbe6f8;
-  --rowB:#cfdcf2;
+// Colores
+const COLOR_ACIERTO  = '#c6efce'; // verde claro (aciertos y nombre ganador por jornada)
+const COLOR_LIMPIO   = '#ffffff'; // blanco
 
-  --fieldBlue:#b4c6ee;
-  --fieldBlue2:#a9bde8;
+// Podio (verdes similares al 1er lugar)
+const COLOR_TOP1 = '#63be7b';
+const COLOR_TOP2 = '#7fcf90';
+const COLOR_TOP3 = '#9be0ab';
 
-  --text:#0f172a;
-  --danger:#b91c1c;
+// Banner por jornada
+const BANNER_MARKER_TEL = '__BANNER__'; // marcador interno
+const COLOR_BANNER_JORNADA  = '#ddebf7'; // azul suave
+const ACERTOS_BANNER_SORT   = 9999;      // para ordenar (se oculta)
 
-  --pick:#5b79b8;
-  --pickDark:#425f9c;
+// Acumulado (tabla a la derecha)
+const ACUM_COL_START = 22; // Columna V (A=1)
+const ACUM_JORNADAS  = 17; // J1..J17
 
-  --cardBorder: rgba(255,255,255,.75);
-  --rowBorder: rgba(255,255,255,.35);
+/* ========= Helpers ========= */
+function ss_(){ return SpreadsheetApp.openById(SPREADSHEET_ID); }
 
-  --shadow: 0 10px 24px rgba(2,6,23,.12);
+function json_(obj){
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-html,body{ overflow-x:hidden; } /* ✅ no horizontal */
-
-body{
-  margin:0;
-  min-height:100vh;
-  background:var(--bg);
-  color:var(--text);
+function col_(headers, name){
+  const idx = headers.indexOf(name);
+  if (idx < 0) throw new Error(`Falta columna: ${name}`);
+  return idx + 1;
 }
 
-.app{
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
+function parseMoney_(v){
+  return Number(String(v||'').replace(/[^0-9.]/g,'')) || 0;
 }
 
-/* Banner + overlay de Jornada */
-.banner{
-  height:210px;
-  background:url("assets/banner.png") center top / cover no-repeat;
-  position:relative;
-}
-.banner-jornada{
-  position:absolute;
-  left:12px;
-  bottom:10px;
-  color:#fff;
-  font-weight:900;
-  font-size:14px;
-  letter-spacing:.04em;
-
-  padding:4px 10px;
-  border-radius:999px;
-
-  background:rgba(15,23,42,.45);
-  backdrop-filter: blur(2px);
-
-  text-shadow:0 1px 4px rgba(0,0,0,.5);
-  user-select:none;
+// Solo acepta L/E/V. Cualquier otra cosa => '' (vacío)
+function normLEV_(v){
+  const s = String(v ?? '').trim().toUpperCase();
+  if (s === 'L' || s === 'E' || s === 'V') return s;
+  return '';
 }
 
-.content{
-  flex:1;
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
+// Normaliza (para comparar): sin acentos, espacios simples, lower
+function normName_(v){
+  let s = String(v ?? '').trim();
+  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g,''); // sin acentos
+  s = s.replace(/\s+/g,' ').toLowerCase();
+  return s;
 }
 
-.inputs{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
+// Mostrar/guardar: MAYÚSCULAS + sin acentos + espacios simples
+function sanitizeNombre_(v){
+  let s = String(v ?? '').trim();
+  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g,''); // sin acentos
+  s = s.replace(/\s+/g,' ');
+  s = s.toUpperCase();
+  return s;
 }
 
-.field{
-  background:linear-gradient(180deg, var(--fieldBlue), var(--fieldBlue2));
-  border-radius:14px;
-  padding:12px;
-  border:2px solid rgba(255,255,255,.85);
-  box-shadow:var(--shadow);
+// Interpreta jornada aunque venga como "Jornada 2" o "2"
+function parseJornada_(v){
+  const s = String(v ?? '').trim();
+  if (!s) return null;
+  const n = Number(s);
+  if (Number.isFinite(n)) return n;
+  const m = s.match(/(\d+)/);
+  return m ? Number(m[1]) : null;
 }
 
-.inline-input{
-  width:100%;
-  border:none;
-  outline:none;
-  background:transparent;
-  font-size:1rem;
-  color:var(--text);
+function esBannerRow_(row, cTel){
+  return String(row?.[cTel-1] ?? '').trim() === BANNER_MARKER_TEL;
 }
 
-/* ✅ SIN scroll interno: la página scrollea normal */
-.matches{
-  position:relative;
-  flex:0 0 auto;
-  background:var(--matches);
-  border-radius:16px;
-  overflow:hidden;
-  border:2px solid var(--cardBorder);
-  box-shadow:var(--shadow);
-}
+/* ========= Config ========= */
+function readConfig_(){
+  const sh = ss_().getSheetByName(SHEET_CONFIG);
+  const lastRow = Math.max(sh.getLastRow(), 15);
+  const grid = sh.getRange(1,1,lastRow,3).getValues();
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:.92rem;
-  table-layout:fixed;
-}
+  const kv = {};
+  grid.forEach(r=>{
+    if (r[0]) kv[String(r[0]).toLowerCase()] = r[1];
+  });
 
-td{ padding:10px 6px; }
-tbody tr:nth-child(odd){background:var(--rowA)}
-tbody tr:nth-child(even){background:var(--rowB)}
-tbody tr{ border-top:1px solid var(--rowBorder); }
+  const subtitulo = String(kv['subtitulo'] || '');
+  const m = subtitulo.match(/(\d+)/);
+  const jornada = m ? Number(m[1]) : null;
 
-.pick{ width:42px; text-align:center; }
-.pick label{position:relative;display:inline-block}
-.pick input{position:absolute;opacity:0}
+  const partidos = [];
+  const resultados = [];
 
-.pick span{
-  display:inline-flex;
-  width:36px;height:32px;
-  align-items:center;justify-content:center;
-  border-radius:12px;
-  border:2px solid var(--pick);
-  color:var(--pick);
-  font-weight:900;
+  // Partidos desde fila 10: A=Local, B=Visitante, C=Resultado
+  for (let r=10; r<=lastRow; r++){
+    const local  = String(sh.getRange(r,1).getValue() || '').trim();
+    const visita = String(sh.getRange(r,2).getValue() || '').trim();
+    const res    = normLEV_(sh.getRange(r,3).getValue()); // si no es L/E/V queda vacío
 
-  /* ✅ animación suave */
-  transition: transform .12s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease;
-  will-change: transform;
-}
-.pick input:checked + span{
-  background:var(--pickDark);
-  color:#fff;
-  transform: scale(1.06);
-  box-shadow: 0 8px 16px rgba(2,6,23,.16);
-}
-.pick label:active span{
-  transform: scale(.96);
-}
+    if (!local && !visita) continue;
 
-.teamCell{ width:33%; text-align:center; overflow:hidden; }
-.team{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-  font-weight:900;
-  text-transform:uppercase;
-  font-size:.84rem;
-  overflow:hidden;
-}
-.team img{
-  width:34px;
-  height:34px;
-  object-fit:contain;
-}
-
-.footer{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.status{
-  min-height:1.2em;
-  font-size:.85rem;
-}
-.status.error{color:var(--danger)}
-.status.success{color:#166534}
-
-.actions{ display:flex; gap:10px; }
-button{
-  border:none;
-  border-radius:999px;
-  padding:10px 18px;
-  font-size:.9rem;
-  font-weight:900;
-  cursor:pointer;
-}
-.btn-clear{ background:#fff; color:var(--pickDark); }
-.btn-send{ background:var(--pickDark); color:#fff; }
-
-/* ===== MODAL (centrado sobre matches) ===== */
-.modal{
-  position:absolute;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:14px;
-  background:rgba(2,6,23,.28);
-  z-index:20;
-}
-.modal.show{ display:flex; }
-
-.modal-card{
-  width:min(420px, 95%);
-  background:linear-gradient(180deg, var(--rowA), var(--rowB));
-  border:2px solid rgba(255,255,255,.85);
-  border-radius:16px;
-  box-shadow:var(--shadow);
-  padding:14px;
-}
-
-.modal-title{
-  font-weight:900;
-  letter-spacing:.04em;
-  margin:0 0 8px 0;
-  text-transform:uppercase;
-  font-size:.9rem;
-  color:rgba(15,23,42,.85);
-}
-
-.modal-msg{
-  margin:0 0 12px 0;
-  line-height:1.35;
-  font-weight:700;
-  color:rgba(15,23,42,.9);
-}
-
-.modal-actions{
-  display:flex;
-  gap:10px;
-  justify-content:flex-end;
-}
-
-.btn-ghost{
-  background:#fff;
-  color:var(--pickDark);
-}
-.btn-primary{
-  background:var(--pickDark);
-  color:#fff;
-}
-
-/* ===== LOADING overlay ===== */
-.loading{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-  background:rgba(2,6,23,.35);
-  z-index:50;
-}
-.loading.show{ display:flex; }
-.loading-card{
-  width:min(420px, 92%);
-  background:rgba(255,255,255,.92);
-  border:2px solid rgba(255,255,255,.85);
-  border-radius:16px;
-  box-shadow:var(--shadow);
-  padding:14px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.spinner{
-  width:18px;
-  height:18px;
-  border-radius:50%;
-  border:3px solid rgba(66,95,156,.25);
-  border-top-color: rgba(66,95,156,1);
-  animation: spin 0.9s linear infinite;
-  flex:0 0 auto;
-}
-@keyframes spin{ to{ transform:rotate(360deg); } }
-.loading-text{
-  font-weight:800;
-  color:rgba(15,23,42,.85);
-}
-
-/* ===== Responsive ===== */
-@media (max-width:420px){
-  .banner{ height:160px; }
-  .content{ padding:10px; gap:10px; }
-
-  td{ padding:8px 4px; }
-  table{ font-size:.86rem; }
-
-  .pick{ width:36px; }
-  .pick span{ width:30px; height:28px; border-radius:10px; }
-
-  .team{ font-size:.78rem; }
-  .team img{ width:28px; height:28px; }
-
-  button{ padding:9px 14px; font-size:.85rem; }
-}
-</style>
-</head>
-
-<body>
-<div class="app">
-
-  <div class="banner">
-    <div class="banner-jornada" id="bannerJornada">Jornada</div>
-  </div>
-
-  <div class="content">
-
-    <div class="inputs">
-      <div class="field">
-        <input id="telefono" class="inline-input" type="tel" placeholder="Teléfono">
-      </div>
-      <div class="field">
-        <input id="nombre" class="inline-input" type="text" placeholder="Nombre">
-      </div>
-    </div>
-
-    <div class="matches" id="matches">
-      <table>
-        <tbody id="tbody"></tbody>
-      </table>
-
-      <!-- Modal -->
-      <div class="modal" id="modal">
-        <div class="modal-card">
-          <div class="modal-title" id="modalTitle"></div>
-          <p class="modal-msg" id="modalMsg"></p>
-          <div class="modal-actions" id="modalActions"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="footer">
-      <div id="status" class="status"></div>
-      <div class="actions">
-        <button class="btn-clear" onclick="limpiar()">Limpiar</button>
-        <button class="btn-send" onclick="enviar()">Enviar</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- Loading -->
-<div class="loading" id="loading">
-  <div class="loading-card">
-    <div class="spinner"></div>
-    <div class="loading-text" id="loadingText">Cargando…</div>
-  </div>
-</div>
-
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpMZP9pseM_0A3ENqb9JHnuK0NEw5Qzt8HD1msfHtMvuGxIDUshuJR_Olro4a3fEM9FQ/exec";
-const WHATSAPP_NUMBER = "523313449844";
-
-const tbody = document.getElementById("tbody");
-const statusEl = document.getElementById("status");
-const telInput = document.getElementById("telefono");
-const nomInput = document.getElementById("nombre");
-
-const bannerJornadaEl = document.getElementById("bannerJornada");
-
-const modal = document.getElementById("modal");
-const modalTitle = document.getElementById("modalTitle");
-const modalMsg = document.getElementById("modalMsg");
-const modalActions = document.getElementById("modalActions");
-
-const loading = document.getElementById("loading");
-const loadingText = document.getElementById("loadingText");
-
-let JORNADA_TXT = "JORNADA";
-let JORNADA_NUM = null;
-
-/* ===== Loading helpers ===== */
-function showLoading(text="Cargando…"){
-  loadingText.textContent = text;
-  loading.classList.add("show");
-}
-function hideLoading(){
-  loading.classList.remove("show");
-}
-
-/* ========= Nombre: MAYÚSCULAS y sin acentos (cliente) ========= */
-function sanitizeNombreClient(v){
-  return (v || "")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-    .replace(/\s+/g," ")
-    .trim()
-    .toUpperCase();
-}
-
-// Mientras escribe:
-nomInput.addEventListener("input", () => {
-  const pos = nomInput.selectionStart || 0;
-  const before = nomInput.value;
-  const after = sanitizeNombreClient(before);
-  if (after !== before){
-    nomInput.value = after;
-    nomInput.setSelectionRange(pos, pos);
+    partidos.push({ local, visita });
+    resultados.push(res);
   }
-  savePersisted();
-});
 
-/* ===== Modal helpers ===== */
-function hideModal(){
-  modal.classList.remove("show");
-  modalActions.innerHTML = "";
-  modalTitle.style.display = "";
+  return {
+    activo: String(kv['activo'] || '').toUpperCase(),
+    jornada,
+    premioSemanal: parseMoney_(kv['premio semanal']),
+    partidos,
+    resultados,
+  };
 }
 
-function showAlert(msg){
-  modalTitle.textContent = "";
-  modalTitle.style.display = "none";
-  modalMsg.textContent = msg;
-  modalActions.innerHTML = `<button class="btn-ghost" onclick="hideModal()">OK</button>`;
-  modal.classList.add("show");
-}
+/* ========= RESPUESTAS: headers + fila 2 ========= */
+function syncRespuestas_(){
+  const sh = ss_().getSheetByName(SHEET_RESP);
 
-function showConfirm(msg){
-  return new Promise(resolve=>{
-    modalTitle.textContent = "";
-    modalTitle.style.display = "none";
+  const headers = [
+    'Jornada',
+    'Timestamp',
+    'Teléfono',
+    'Nombre',
+    ...Array.from({length: MAX_PARTIDOS}, (_,i)=>`p${i+1}`),
+    'Aciertos',
+    'NumGanadores',
+    'PremioPorGanador',
+  ];
 
-    modalMsg.textContent = msg;
-    modalActions.innerHTML = `
-      <button class="btn-ghost" id="mNo">NO</button>
-      <button class="btn-primary" id="mYes">SI</button>
-    `;
-    modal.classList.add("show");
+  sh.getRange(1,1,1,headers.length).setValues([headers]);
+  sh.setFrozenRows(1);
 
-    document.getElementById("mNo").onclick = () => { hideModal(); resolve(false); };
-    document.getElementById("mYes").onclick = () => { hideModal(); resolve(true); };
-  });
-}
+  if (sh.getLastRow() < 2) sh.insertRowAfter(1);
 
-/* LOGOS */
-function logo(team){
-  let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-    .toLowerCase().replace(/[^a-z0-9]/g,"");
-  return "assets/"+s+".png";
-}
+  const cfg = readConfig_();
+  const row2 = new Array(headers.length).fill('');
 
-/* PERSISTENCIA */
-const LS_TEL="qlm_tel";
-const LS_NOM="qlm_nom";
-
-function loadPersisted(){
-  telInput.value = localStorage.getItem(LS_TEL) || "";
-  nomInput.value = localStorage.getItem(LS_NOM) || "";
-  nomInput.value = sanitizeNombreClient(nomInput.value);
-}
-function savePersisted(){
-  localStorage.setItem(LS_TEL, telInput.value.trim());
-  localStorage.setItem(LS_NOM, sanitizeNombreClient(nomInput.value));
-}
-telInput.addEventListener("input", savePersisted);
-
-/* ✅ Cache de config para pintar rápido */
-const LS_CFG="qlm_cfg_cache_v1"; // { jornada, partidos, ts }
-
-function setBanner(j){
-  const n = Number(j);
-  if (Number.isFinite(n) && n > 0){
-    JORNADA_NUM = n;
-    JORNADA_TXT = `JORNADA ${n}`;
-    bannerJornadaEl.textContent = `Jornada ${n}`;
-  } else {
-    JORNADA_NUM = null;
-    JORNADA_TXT = "JORNADA";
-    bannerJornadaEl.textContent = "Jornada";
-  }
-}
-
-function renderPartidos(partidos){
-  tbody.innerHTML="";
-  (partidos||[]).forEach((p,i)=>{
-    tbody.innerHTML += `
-    <tr data-local="${p.local}" data-visita="${p.visita}">
-      <td class="pick"><label><input type="radio" name="p${i+1}" value="L"><span>L</span></label></td>
-      <td class="teamCell"><div class="team"><img src="${logo(p.local)}">${p.local}</div></td>
-      <td class="pick"><label><input type="radio" name="p${i+1}" value="E"><span>E</span></label></td>
-      <td class="teamCell"><div class="team"><img src="${logo(p.visita)}">${p.visita}</div></td>
-      <td class="pick"><label><input type="radio" name="p${i+1}" value="V"><span>V</span></label></td>
-    </tr>`;
-  });
-}
-
-/* MENSAJE WHATSAPP */
-function construirMensaje(nombre, partidos){
-  let msg = "🏆 *QUINIELA LOS MISMOS*\n";
-  msg += `📅 *${JORNADA_TXT}*\n`;
-  msg += "━━━━━━━━━━━━━━━\n";
-  msg += `👤 *${nombre}*\n\n`;
-
-  partidos.forEach((p,i)=>{
-    msg += `${i+1}) ${p.local} vs ${p.visita} — *${p.pronostico}*\n`;
+  const start = headers.indexOf('p1');
+  cfg.partidos.forEach((p,i)=>{
+    if (i < MAX_PARTIDOS) row2[start + i] = `${p.local} vs ${p.visita}`;
   });
 
-  msg += "\n━━━━━━━━━━━━━━━";
-  msg += "\n✅ *Quiniela enviada y registrada*";
-  return msg.trim();
+  sh.getRange(2,1,1,headers.length).setValues([row2]);
 }
 
-/* CARGAR */
-async function cargar(){
-  loadPersisted();
+/* ========= Trigger (CONFIG) ========= */
+function onEditConfig_(e){
+  if (e.range.getSheet().getName() !== SHEET_CONFIG) return;
+  syncRespuestas_();
+}
 
-  // pinta inmediato desde cache (si existe)
-  try{
-    const cached = JSON.parse(localStorage.getItem(LS_CFG) || "null");
-    if (cached && Array.isArray(cached.partidos) && cached.partidos.length){
-      setBanner(cached.jornada);
-      renderPartidos(cached.partidos);
+function instalarTriggerConfig(){
+  ScriptApp.getProjectTriggers().forEach(t=>{
+    if (t.getHandlerFunction() === 'onEditConfig_') ScriptApp.deleteTrigger(t);
+  });
+
+  ScriptApp.newTrigger('onEditConfig_')
+    .forSpreadsheet(SPREADSHEET_ID)
+    .onEdit()
+    .create();
+
+  syncRespuestas_();
+}
+
+/* ========= Banner por jornada ========= */
+function asegurarBannerJornada_(cfg){
+  const sh = ss_().getSheetByName(SHEET_RESP);
+  const lastRow = sh.getLastRow();
+  const lastCol = sh.getLastColumn();
+
+  const headers = sh.getRange(1,1,1,lastCol).getValues()[0];
+  const cJ   = col_(headers,'Jornada');
+  const cTs  = col_(headers,'Timestamp');
+  const cTel = col_(headers,'Teléfono');
+  const cP1  = col_(headers,'p1');
+  const cA   = col_(headers,'Aciertos');
+  const cNom = col_(headers,'Nombre');
+
+  // ya hay banner o fila real
+  if (lastRow >= 3){
+    const data = sh.getRange(3,1,lastRow-2,lastCol).getValues();
+    for (let i=0; i<data.length; i++){
+      const j = parseJornada_(data[i][cJ-1]);
+      if (j !== cfg.jornada) continue;
+      if (esBannerRow_(data[i], cTel)) return;
+
+      const nombre = String(data[i][cNom-1] ?? '').trim();
+      const ts = String(data[i][cTs-1] ?? '').trim();
+      if ((nombre || ts) && !esBannerRow_(data[i], cTel)) return;
     }
-  }catch(_){}
+  }
 
-  showLoading("Cargando quiniela…");
+  const banner = new Array(lastCol).fill('');
+  banner[cJ-1]   = cfg.jornada;
+  banner[cTs-1]  = `PARTIDOS JORNADA ${cfg.jornada}`;
+  banner[cTel-1] = BANNER_MARKER_TEL;
+  banner[cA-1]   = ACERTOS_BANNER_SORT;
+  banner[cNom-1] = '';
+
+  const n = Math.min(cfg.partidos.length, MAX_PARTIDOS);
+  for (let i=0; i<n; i++){
+    banner[(cP1-1)+i] = `${cfg.partidos[i].local} vs ${cfg.partidos[i].visita}`;
+  }
+
+  sh.appendRow(banner);
+
+  const r = sh.getLastRow();
+  sh.getRange(r,1,1,lastCol)
+    .setBackground(COLOR_BANNER_JORNADA)
+    .setFontWeight('bold');
+
+  sh.getRange(r, cA).setNumberFormat(';;;');
+}
+
+/* ========= Buscar fila por nombre+jornada ========= */
+function filaPorNombreYJornada_(nombre, jornada){
+  const sh = ss_().getSheetByName(SHEET_RESP);
+  const lastRow = sh.getLastRow();
+  if (lastRow < 3) return null;
+
+  const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  const cNom = col_(headers,'Nombre');
+  const cJor = col_(headers,'Jornada');
+  const cTel = col_(headers,'Teléfono');
+
+  const nombres = sh.getRange(3, cNom, lastRow-2, 1).getValues().flat();
+  const jornadas = sh.getRange(3, cJor, lastRow-2, 1).getValues().flat();
+  const tels = sh.getRange(3, cTel, lastRow-2, 1).getValues().flat();
+
+  const targetName = normName_(nombre);
+  const targetJ = Number(jornada);
+
+  for (let i=0; i<nombres.length; i++){
+    if (String(tels[i] ?? '').trim() === BANNER_MARKER_TEL) continue;
+    if (normName_(nombres[i]) !== targetName) continue;
+    const j = parseJornada_(jornadas[i]);
+    if (j === targetJ) return 3 + i;
+  }
+  return null;
+}
+
+/* ========= Padrón: existe en Jornada 1 o 2 ========= */
+function nombreExisteEnJornada1o2_(nombre){
+  const sh = ss_().getSheetByName(SHEET_RESP);
+  const lastRow = sh.getLastRow();
+  if (lastRow < 3) return false;
+
+  const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  const cNom = col_(headers,'Nombre');
+  const cJor = col_(headers,'Jornada');
+  const cTel = col_(headers,'Teléfono');
+
+  const target = normName_(nombre);
+  const nombres = sh.getRange(3, cNom, lastRow-2, 1).getValues().flat();
+  const jornadas = sh.getRange(3, cJor, lastRow-2, 1).getValues().flat();
+  const tels = sh.getRange(3, cTel, lastRow-2, 1).getValues().flat();
+
+  for (let i=0; i<nombres.length; i++){
+    if (String(tels[i] ?? '').trim() === BANNER_MARKER_TEL) continue;
+    const j = parseJornada_(jornadas[i]);
+    if (j !== 1 && j !== 2) continue;
+    if (normName_(nombres[i]) === target) return true;
+  }
+  return false;
+}
+
+/* ========= WebApp ========= */
+function doGet(e){
   try{
-    const r = await fetch(SCRIPT_URL+"?action=getConfig");
-    const d = await r.json();
-    if(!d.ok) throw new Error(d.message);
-
-    setBanner(d.jornada);
-    renderPartidos(d.partidos || []);
-
-    localStorage.setItem(LS_CFG, JSON.stringify({
-      jornada: d.jornada || null,
-      partidos: d.partidos || [],
-      ts: Date.now()
-    }));
-
-    hideLoading();
-  }catch(e){
-    hideLoading();
-    statusEl.textContent=e.message;
-    statusEl.className="status error";
+    if (e?.parameter?.action !== 'getConfig') return json_({ ok:true });
+    syncRespuestas_();
+    return json_({ ok:true, ...readConfig_() });
+  }catch(err){
+    return json_({ ok:false, message:String(err) });
   }
 }
 
-/* LIMPIAR */
-function limpiar(){
-  document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
-  statusEl.textContent="";
-}
-
-/* Construir payload */
-function buildPayload(){
-  const telefono = telInput.value.trim();
-  const nombre = sanitizeNombreClient(nomInput.value);
-
-  if(!telefono) throw new Error("Ingresa teléfono");
-  if(!nombre) throw new Error("Ingresa nombre");
-
-  const partidos=[];
-  [...tbody.querySelectorAll("tr")].forEach((tr,i)=>{
-    const sel = tr.querySelector(`input[name="p${i+1}"]:checked`);
-    if(!sel) throw new Error("Faltan selecciones");
-    partidos.push({
-      local: tr.dataset.local,
-      visita: tr.dataset.visita,
-      pronostico: sel.value
-    });
-  });
-
-  return { telefono, nombre, partidos };
-}
-
-/* ENVIAR */
-async function enviar(){
+function doPost(e){
   try{
-    savePersisted();
-    const payload = buildPayload();
+    const data = JSON.parse(e.postData.contents || '{}');
 
-    showLoading("Enviando quiniela…");
+    // ✅ Normalizar nombre: MAYÚSCULAS y sin acentos (servidor)
+    const nombre  = sanitizeNombre_(data.nombre || '');
+    const tel     = String(data.telefono || '').trim();
+    const replace = data.replace === true;
 
-    // 1) intento normal
-    let r = await fetch(SCRIPT_URL,{
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    });
+    if (!nombre) return json_({ ok:false, message:'Falta nombre' });
+    if (!tel)    return json_({ ok:false, message:'Falta teléfono' });
 
-    let d = JSON.parse(await r.text());
+    const cfg = readConfig_();
+    if (cfg.activo !== 'SI') return json_({ ok:false, message:'Quiniela inactiva' });
+    if (!cfg.jornada)        return json_({ ok:false, message:'Jornada no definida' });
 
-    // 2) si es duplicado → modal SI/NO
-    if(!d.ok && d.code === "DUPLICATE"){
-      hideLoading();
-      const ok = await showConfirm("Ya existe una quiniela con este nombre en esta jornada. ¿Quieres reemplazarla?");
-      if(!ok) return;
+    // ✅ Regla padrón:
+    // - Jornada 1: libre
+    // - Jornada 2: libre (tu filtro manual)
+    // - Jornada 3+: solo si existe en Jornada 1 o 2
+    if (cfg.jornada >= 3){
+      if (!nombreExisteEnJornada1o2_(nombre)){
+        return json_({
+          ok:false,
+          message:'Este nombre no está registrado en Jornadas 1 o 2. Usa un nombre ya registrado.'
+        });
+      }
+    }
 
-      showLoading("Reemplazando quiniela…");
-      r = await fetch(SCRIPT_URL,{
-        method:"POST",
-        headers:{ "Content-Type":"text/plain;charset=utf-8" },
-        body: JSON.stringify({ ...payload, replace:true })
+    if (!Array.isArray(data.partidos) || data.partidos.length !== cfg.partidos.length){
+      return json_({ ok:false, message:'Selecciones incompletas' });
+    }
+
+    const sh = ss_().getSheetByName(SHEET_RESP);
+    const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+
+    const fila = filaPorNombreYJornada_(nombre, cfg.jornada);
+
+    if (fila && !replace){
+      return json_({
+        ok:false,
+        code:'DUPLICATE',
+        message:'Ya existe una quiniela con este nombre en esta jornada. ¿Quieres reemplazarla?'
       });
-
-      d = JSON.parse(await r.text());
     }
 
-    hideLoading();
+    const row = new Array(headers.length).fill('');
+    row[col_(headers,'Jornada')-1]    = cfg.jornada;
+    row[col_(headers,'Timestamp')-1]  = new Date();
+    row[col_(headers,'Nombre')-1]     = nombre; // ✅ ya viene en MAYÚSCULAS sin acentos
+    row[col_(headers,'Teléfono')-1]   = tel;
 
-    if(!d.ok){
-      showAlert(d.message || "Error al enviar");
-      return;
-    }
-
-    // arma mensaje usando los partidos del cupón (DOM)
-    const partidos = [...tbody.querySelectorAll("tr")].map((tr,i)=>{
-      const sel = tr.querySelector(`input[name="p${i+1}"]:checked`);
-      return {
-        local: tr.dataset.local,
-        visita: tr.dataset.visita,
-        pronostico: sel ? sel.value : ""
-      };
+    // Guardar picks: solo L/E/V
+    data.partidos.forEach((p,i)=>{
+      if (i < MAX_PARTIDOS){
+        row[col_(headers,`p${i+1}`)-1] = normLEV_(p?.pronostico);
+      }
     });
 
-    const mensaje = construirMensaje(payload.nombre, partidos);
-    const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
+    // Banner de la jornada
+    asegurarBannerJornada_(cfg);
 
-    statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
-    statusEl.className="status success";
+    if (fila){
+      sh.getRange(fila, 1, 1, row.length).setValues([row]);
+    } else {
+      sh.appendRow(row);
+    }
 
-    /* LIMPIAR CUPÓN (solo selecciones) */
-    document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
+    return json_({ ok:true });
 
-    // Quita el mensaje después de 1.5s (nombre/teléfono se quedan)
-    setTimeout(() => {
-      statusEl.textContent = "";
-      statusEl.className = "status";
-    }, 1500);
-
-    window.location.href = url;
-
-  }catch(e){
-    hideLoading();
-    showAlert(e.message || String(e));
+  }catch(err){
+    return json_({ ok:false, message:String(err) });
   }
 }
 
-cargar();
-</script>
-</body>
-</html>
+/* ========= Formato visual: aciertos + ganadores ========= */
+function aplicarFormatoJornada_(cfg){
+  const sh = ss_().getSheetByName(SHEET_RESP);
+  const lastRow = sh.getLastRow();
+  const lastCol = sh.getLastColumn();
+  if (lastRow < 3) return;
+
+  const values = sh.getRange(1,1,lastRow,lastCol).getValues();
+  const h = values[0];
+
+  const cJ   = col_(h,'Jornada');
+  const cA   = col_(h,'Aciertos');
+  const cP1  = col_(h,'p1');
+  const cTel = col_(h,'Teléfono');
+  const cNom = col_(h,'Nombre');
+
+  const numPicks = Math.min(cfg.partidos.length, MAX_PARTIDOS);
+
+  let maxA = -1;
+  for (let r=2; r<values.length; r++){
+    if (esBannerRow_(values[r], cTel)) continue;
+    const j = parseJornada_(values[r][cJ-1]);
+    if (j === null || j !== cfg.jornada) continue;
+    const ac = Number(values[r][cA-1]) || 0;
+    if (ac > maxA) maxA = ac;
+  }
+  if (maxA < 0) maxA = 0;
+
+  const dataRows = lastRow - 2;
+  const rangoDatos = sh.getRange(3,1,dataRows,lastCol);
+  const bgs = rangoDatos.getBackgrounds();
+
+  for (let rr=0; rr<dataRows; rr++){
+    const r = rr + 2;
+    if (esBannerRow_(values[r], cTel)) continue;
+
+    const j = parseJornada_(values[r][cJ-1]);
+    if (j === null || j !== cfg.jornada) continue;
+
+    const ac = Number(values[r][cA-1]) || 0;
+    const esGanador = (ac === maxA);
+
+    for (let c=0; c<lastCol; c++) bgs[rr][c] = COLOR_LIMPIO;
+
+    if (esGanador){
+      bgs[rr][cNom-1] = COLOR_ACIERTO; // SOLO nombre
+    }
+
+    for (let i=0; i<numPicks; i++){
+      const pick = normLEV_(values[r][(cP1-1)+i]);
+      const res  = normLEV_(cfg.resultados[i]);
+      if (pick && res && pick === res){
+        bgs[rr][(cP1-1)+i] = COLOR_ACIERTO;
+      }
+    }
+  }
+
+  rangoDatos.setBackgrounds(bgs);
+}
+
+/* ========= Calificar jornada actual ========= */
+function calificarJornadaActual(){
+  const cfg = readConfig_();
+  if (!cfg.jornada) throw new Error('Jornada no definida en CONFIG (Subtitulo).');
+
+  const sh = ss_().getSheetByName(SHEET_RESP);
+  const values = sh.getDataRange().getValues();
+  const h = values[0];
+
+  const cJ   = col_(h,'Jornada');
+  const cA   = col_(h,'Aciertos');
+  const cNG  = col_(h,'NumGanadores');
+  const cPP  = col_(h,'PremioPorGanador');
+  const cP1  = col_(h,'p1');
+  const cTel = col_(h,'Teléfono');
+
+  const n = Math.min(cfg.partidos.length, MAX_PARTIDOS);
+
+  let maxA = -1;
+  const filas = [];
+
+  for (let r=2; r<values.length; r++){
+    if (esBannerRow_(values[r], cTel)) continue;
+
+    let j = parseJornada_(values[r][cJ-1]);
+    const tienePicks = String(values[r][cP1-1] ?? '').trim() !== '';
+    if (j === null && tienePicks){
+      j = cfg.jornada;
+      values[r][cJ-1] = cfg.jornada;
+    }
+
+    if (j === null || j !== cfg.jornada) continue;
+
+    let ac = 0;
+    for (let i=0; i<n; i++){
+      const pick = normLEV_(values[r][col_(h,`p${i+1}`)-1]);
+      const res  = normLEV_(cfg.resultados[i]);
+      if (pick && res && pick === res) ac++;
+    }
+
+    values[r][cA-1] = ac;
+    filas.push(r);
+    if (ac > maxA) maxA = ac;
+  }
+
+  const ganadores = filas.filter(r => Number(values[r][cA-1]) === maxA);
+  const porGanador = ganadores.length ? (cfg.premioSemanal / ganadores.length) : 0;
+
+  const setGanadores = new Set(ganadores);
+  filas.forEach(r=>{
+    if (setGanadores.has(r)){
+      values[r][cNG-1] = ganadores.length;
+      values[r][cPP-1] = porGanador;
+    } else {
+      values[r][cNG-1] = '';
+      values[r][cPP-1] = '';
+    }
+  });
+
+  sh.getRange(1,1,values.length,values[0].length).setValues(values);
+
+  if (sh.getLastRow() > 2){
+    sh.getRange(3,1,sh.getLastRow()-2,sh.getLastColumn())
+      .sort([{column:cJ, ascending:false}, {column:cA, ascending:false}]);
+  }
+
+  aplicarFormatoJornada_(cfg);
+  actualizarAcumulado_();
+}
+
+/* ========= ACUMULADO PODIO (empates incluidos) =========
+   Podio | Nombre | Aciertos acumulados | Promedio de aciertos | Premios acumulados | J1..J17
+   - Podio por GRUPOS: empates comparten lugar
+   - Colorea celdas de PODIO y NOMBRE para lugares 1/2/3 (incluye empates)
+   - Colorea en verde (COLOR_ACIERTO) las celdas Jx donde fue ganador de esa jornada
+   - Alineación: todo centrado excepto Nombre (izquierda)
+======================================================== */
+function actualizarAcumulado_(){
+  const sh = ss_().getSheetByName(SHEET_RESP);
+  const lastRow = sh.getLastRow();
+  const lastCol = sh.getLastColumn();
+  if (lastRow < 3) return;
+
+  const values = sh.getRange(1,1,lastRow,lastCol).getValues();
+  const h = values[0];
+
+  const cJ   = col_(h,'Jornada');
+  const cA   = col_(h,'Aciertos');
+  const cNom = col_(h,'Nombre');
+  const cTel = col_(h,'Teléfono');
+  const cTs  = col_(h,'Timestamp');
+  const cPP  = col_(h,'PremioPorGanador');
+
+  const maxPorJ = Array.from({length: ACUM_JORNADAS+1}, ()=>0);
+  const map = new Map();
+
+  for (let r=2; r<values.length; r++){
+    const nombre = String(values[r][cNom-1] ?? '').trim();
+    if (!nombre) continue;
+
+    const tel = String(values[r][cTel-1] ?? '').trim();
+    const ts  = String(values[r][cTs-1] ?? '').trim().toUpperCase();
+    if (tel === BANNER_MARKER_TEL) continue;
+    if (ts.startsWith('PARTIDOS JORNADA')) continue;
+    if (nombre === '==PARTIDOS==') continue;
+
+    const j = parseJornada_(values[r][cJ-1]);
+    if (!Number.isFinite(j) || j < 1 || j > ACUM_JORNADAS) continue;
+
+    const ac = Number(values[r][cA-1]);
+    const aciertos = Number.isFinite(ac) ? ac : 0;
+
+    const prem = Number(values[r][cPP-1]);
+    const premio = Number.isFinite(prem) ? prem : 0;
+
+    if (aciertos > maxPorJ[j]) maxPorJ[j] = aciertos;
+
+    const key = normName_(nombre);
+    if (!map.has(key)){
+      map.set(key, {
+        name: nombre, // ya viene en MAYÚSCULAS sin acentos
+        totalA: 0,
+        totalPrem: 0,
+        jugadas: new Set(),
+        porJ: Array.from({length: ACUM_JORNADAS+1}, ()=>null),
+      });
+    }
+
+    const obj = map.get(key);
+    obj.totalA += aciertos;
+    obj.totalPrem += premio;
+    obj.jugadas.add(j);
+
+    const prev = obj.porJ[j];
+    if (prev === null || aciertos > prev) obj.porJ[j] = aciertos;
+  }
+
+  const headers = [
+    'Podio',
+    'Nombre',
+    'Aciertos acumulados',
+    'Promedio de aciertos',
+    'Premios acumulados',
+    ...Array.from({length: ACUM_JORNADAS}, (_,i)=>`J${i+1}`)
+  ];
+
+  const rows = Array.from(map.values()).map(o => {
+    const jj = o.jugadas.size;
+    const prom = jj ? (o.totalA / jj) : 0;
+
+    const porJ = [];
+    for (let j=1; j<=ACUM_JORNADAS; j++){
+      porJ.push(o.porJ[j] === null ? '' : o.porJ[j]);
+    }
+
+    return ['', o.name, o.totalA, prom, o.totalPrem, ...porJ];
+  });
+
+  // Orden: aciertos desc, luego premios desc, luego nombre
+  rows.sort((a,b) => (b[2]-a[2]) || (b[4]-a[4]) || String(a[1]).localeCompare(String(b[1])));
+
+  // Podio por GRUPOS (empates comparten lugar)
+  // ✅ Podio por GRUPOS usando SOLO "Aciertos acumulados"
+// (empate = mismo total de aciertos, aunque tengan premios distintos)
+let rank = 0;
+let prevAciertos = null;
+
+for (let i=0; i<rows.length; i++){
+  const acA = Number(rows[i][2]) || 0;
+
+  if (prevAciertos === null || acA !== prevAciertos){
+    rank += 1;
+    prevAciertos = acA;
+  }
+
+  rows[i][0] = (rank <= 3) ? rank : '';
+}
+
+  const startRow = 1;
+  const startCol = ACUM_COL_START;
+
+  sh.getRange(startRow, startCol, 1, 1).setValues([['ACUMULADO']]).setFontWeight('bold');
+  sh.getRange(startRow+1, startCol, 1, headers.length).setValues([headers]).setFontWeight('bold');
+
+  const maxClearRows = Math.max(rows.length + 10, 80);
+  sh.getRange(startRow+2, startCol, maxClearRows, headers.length).clearContent().clearFormat();
+
+  if (rows.length){
+    sh.getRange(startRow+2, startCol, rows.length, headers.length).setValues(rows);
+
+    sh.getRange(startRow+2, startCol+2, rows.length, 1).setNumberFormat('0');
+    sh.getRange(startRow+2, startCol+3, rows.length, 1).setNumberFormat('0.00');
+    sh.getRange(startRow+2, startCol+4, rows.length, 1).setNumberFormat('$#,##0.00');
+    sh.getRange(startRow+2, startCol+5, rows.length, ACUM_JORNADAS).setNumberFormat('0');
+
+    sh.getRange(startRow+2, startCol, rows.length, headers.length)
+      .setHorizontalAlignment('center')
+      .setVerticalAlignment('middle');
+
+    sh.getRange(startRow+2, startCol+1, rows.length, 1)
+      .setHorizontalAlignment('left');
+  }
+
+  const totalRows = 2 + Math.max(rows.length,1);
+  sh.getRange(startRow, startCol, totalRows, headers.length)
+    .setBorder(true,true,true,true,true,true);
+
+  // Ganadores por jornada (celdas Jx)
+  if (rows.length){
+    const jStartCol = startCol + 5;
+    const bgJ = sh.getRange(startRow+2, jStartCol, rows.length, ACUM_JORNADAS).getBackgrounds();
+
+    for (let r=0; r<rows.length; r++){
+      for (let j=1; j<=ACUM_JORNADAS; j++){
+        const val = rows[r][4 + j];
+        const num = Number(val);
+        if (Number.isFinite(num) && num > 0 && num === maxPorJ[j]){
+          bgJ[r][j-1] = COLOR_ACIERTO;
+        }
+      }
+    }
+    sh.getRange(startRow+2, jStartCol, rows.length, ACUM_JORNADAS).setBackgrounds(bgJ);
+  }
+
+  // Colorear celdas PODIO y NOMBRE para podio 1/2/3 (incluye empates)
+  if (rows.length){
+    const rangePodio  = sh.getRange(startRow+2, startCol,   rows.length, 1); // Podio
+    const rangeNombre = sh.getRange(startRow+2, startCol+1, rows.length, 1); // Nombre
+
+    const bgP = rangePodio.getBackgrounds();
+    const bgN = rangeNombre.getBackgrounds();
+
+    for (let r=0; r<rows.length; r++){
+      const p = Number(rows[r][0]);
+      let color = null;
+      if (p === 1) color = COLOR_TOP1;
+      else if (p === 2) color = COLOR_TOP2;
+      else if (p === 3) color = COLOR_TOP3;
+
+      if (color){
+        bgP[r][0] = color;
+        bgN[r][0] = color;
+      }
+    }
+
+    rangePodio.setBackgrounds(bgP);
+    rangeNombre.setBackgrounds(bgN);
+  }
+}
+
+// Wrapper visible en el menú de ejecutar (sin underscore)
+function actualizarAcumulado(){
+  actualizarAcumulado_();
+}
