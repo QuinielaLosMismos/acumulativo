@@ -28,7 +28,7 @@
 }
 
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-html,body{ overflow-x:hidden; }
+html,body{ overflow-x:hidden; } /* ✅ no horizontal */
 
 body{
   margin:0;
@@ -57,27 +57,13 @@ body{
   font-weight:900;
   font-size:14px;
   letter-spacing:.04em;
-  padding:4px 10px;
-  border-radius:999px;
-  background:rgba(15,23,42,.45);
-  backdrop-filter: blur(2px);
-  text-shadow:0 1px 4px rgba(0,0,0,.5);
-  user-select:none;
-}
 
-/* Badge estado registro (abierto/cerrado) */
-.banner-status{
-  position:absolute;
-  right:12px;
-  bottom:10px;
-  color:#fff;
-  font-weight:900;
-  font-size:12px;
-  letter-spacing:.04em;
   padding:4px 10px;
   border-radius:999px;
+
   background:rgba(15,23,42,.45);
   backdrop-filter: blur(2px);
+
   text-shadow:0 1px 4px rgba(0,0,0,.5);
   user-select:none;
 }
@@ -113,108 +99,7 @@ body{
   color:var(--text);
 }
 
-/* Admin panel */
-.admin{
-  background:linear-gradient(180deg, var(--rowA), var(--rowB));
-  border-radius:16px;
-  border:2px solid rgba(255,255,255,.85);
-  box-shadow:var(--shadow);
-  padding:12px;
-  display:none;
-}
-.admin.show{ display:block; }
-
-.admin-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin-bottom:10px;
-}
-.admin-title{
-  font-weight:900;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  font-size:.86rem;
-  opacity:.85;
-}
-
-.switch-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:10px 10px;
-  border-radius:12px;
-  background:rgba(255,255,255,.55);
-  border:1px solid rgba(255,255,255,.8);
-}
-.switch-row + .switch-row{ margin-top:10px; }
-.switch-label{
-  font-weight:900;
-  font-size:.9rem;
-}
-.switch-sub{
-  font-weight:700;
-  font-size:.78rem;
-  opacity:.7;
-  margin-top:2px;
-}
-.switch-left{ display:flex; flex-direction:column; }
-
-.toggle{
-  appearance:none;
-  width:46px;
-  height:28px;
-  border-radius:999px;
-  background:rgba(15,23,42,.18);
-  position:relative;
-  outline:none;
-  cursor:pointer;
-  transition: background .18s ease;
-  flex:0 0 auto;
-}
-.toggle::after{
-  content:"";
-  width:22px;
-  height:22px;
-  border-radius:50%;
-  background:#fff;
-  position:absolute;
-  top:3px;
-  left:3px;
-  transition: transform .18s ease;
-  box-shadow:0 8px 16px rgba(2,6,23,.16);
-}
-.toggle:checked{
-  background: rgba(66,95,156,.85);
-}
-.toggle:checked::after{
-  transform: translateX(18px);
-}
-
-.admin-actions{
-  display:flex;
-  gap:10px;
-  justify-content:flex-end;
-  margin-top:10px;
-}
-.btn-admin{
-  border:none;
-  border-radius:999px;
-  padding:9px 14px;
-  font-size:.85rem;
-  font-weight:900;
-  cursor:pointer;
-  background:#fff;
-  color:var(--pickDark);
-}
-.btn-admin.primary{
-  background:var(--pickDark);
-  color:#fff;
-}
-
-/* Matches */
+/* ✅ SIN scroll interno: la página scrollea normal */
 .matches{
   position:relative;
   flex:0 0 auto;
@@ -237,22 +122,20 @@ tbody tr:nth-child(odd){background:var(--rowA)}
 tbody tr:nth-child(even){background:var(--rowB)}
 tbody tr{ border-top:1px solid var(--rowBorder); }
 
-.pick{ width:56px; text-align:center; } /* ✅ MÁS ANCHO */
+.pick{ width:42px; text-align:center; }
 .pick label{position:relative;display:inline-block}
 .pick input{position:absolute;opacity:0}
 
 .pick span{
   display:inline-flex;
-  width:48px;              /* ✅ MÁS GRANDE */
-  height:42px;             /* ✅ MÁS GRANDE */
-  align-items:center;
-  justify-content:center;
-  border-radius:14px;
+  width:36px;height:32px;
+  align-items:center;justify-content:center;
+  border-radius:12px;
   border:2px solid var(--pick);
   color:var(--pick);
   font-weight:900;
-  font-size:1.05rem;
 
+  /* ✅ animación suave */
   transition: transform .12s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease;
   will-change: transform;
 }
@@ -260,7 +143,7 @@ tbody tr{ border-top:1px solid var(--rowBorder); }
   background:var(--pickDark);
   color:#fff;
   transform: scale(1.06);
-  box-shadow: 0 10px 20px rgba(2,6,23,.18);
+  box-shadow: 0 8px 16px rgba(2,6,23,.16);
 }
 .pick label:active span{
   transform: scale(.96);
@@ -307,12 +190,8 @@ button{
 }
 .btn-clear{ background:#fff; color:var(--pickDark); }
 .btn-send{ background:var(--pickDark); color:#fff; }
-.btn-send:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
 
-/* Modal */
+/* ===== MODAL (centrado sobre matches) ===== */
 .modal{
   position:absolute;
   inset:0;
@@ -356,10 +235,16 @@ button{
   justify-content:flex-end;
 }
 
-.btn-ghost{ background:#fff; color:var(--pickDark); }
-.btn-primary{ background:var(--pickDark); color:#fff; }
+.btn-ghost{
+  background:#fff;
+  color:var(--pickDark);
+}
+.btn-primary{
+  background:var(--pickDark);
+  color:#fff;
+}
 
-/* Loading */
+/* ===== LOADING overlay ===== */
 .loading{
   position:fixed;
   inset:0;
@@ -389,6 +274,7 @@ button{
   border:3px solid rgba(66,95,156,.25);
   border-top-color: rgba(66,95,156,1);
   animation: spin 0.9s linear infinite;
+  flex:0 0 auto;
 }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 .loading-text{
@@ -396,7 +282,7 @@ button{
   color:rgba(15,23,42,.85);
 }
 
-/* Responsive */
+/* ===== Responsive ===== */
 @media (max-width:420px){
   .banner{ height:160px; }
   .content{ padding:10px; gap:10px; }
@@ -404,8 +290,8 @@ button{
   td{ padding:8px 4px; }
   table{ font-size:.86rem; }
 
-  .pick{ width:50px; }
-  .pick span{ width:44px; height:38px; border-radius:12px; font-size:1rem; }
+  .pick{ width:36px; }
+  .pick span{ width:30px; height:28px; border-radius:10px; }
 
   .team{ font-size:.78rem; }
   .team img{ width:28px; height:28px; }
@@ -420,47 +306,9 @@ button{
 
   <div class="banner">
     <div class="banner-jornada" id="bannerJornada">Jornada</div>
-    <div class="banner-status" id="bannerStatus">Cargando…</div>
   </div>
 
   <div class="content">
-
-    <!-- Admin (oculto por defecto) -->
-    <div class="admin" id="adminPanel">
-      <div class="admin-head">
-        <div class="admin-title">Administrador</div>
-        <button class="btn-admin" id="btnAdminClose" type="button">Cerrar</button>
-      </div>
-
-      <div class="switch-row">
-        <div class="switch-left">
-          <div class="switch-label">Permitir nuevos participantes</div>
-          <div class="switch-sub">Si está activo, se aceptan nombres nuevos aunque no estén registrados.</div>
-        </div>
-        <input class="toggle" id="swAllowNew" type="checkbox" />
-      </div>
-
-      <div class="switch-row">
-        <div class="switch-left">
-          <div class="switch-label">Cierre automático de registro</div>
-          <div class="switch-sub">Si está activo, se cierra en la fecha/hora configurada en CONFIG.</div>
-        </div>
-        <input class="toggle" id="swCloseEnabled" type="checkbox" />
-      </div>
-
-      <div class="switch-row">
-        <div class="switch-left">
-          <div class="switch-label">Fecha/hora de cierre</div>
-          <div class="switch-sub">Solo se usa si el cierre automático está activo.</div>
-        </div>
-        <input id="closeAtInput" class="inline-input" type="text" placeholder="YYYY-MM-DD HH:MM" style="max-width:170px;background:transparent;" />
-      </div>
-
-      <div class="admin-actions">
-        <button class="btn-admin" id="btnAdminRefresh" type="button">Recargar</button>
-        <button class="btn-admin primary" id="btnAdminSave" type="button">Guardar</button>
-      </div>
-    </div>
 
     <div class="inputs">
       <div class="field">
@@ -476,6 +324,7 @@ button{
         <tbody id="tbody"></tbody>
       </table>
 
+      <!-- Modal -->
       <div class="modal" id="modal">
         <div class="modal-card">
           <div class="modal-title" id="modalTitle"></div>
@@ -489,13 +338,14 @@ button{
       <div id="status" class="status"></div>
       <div class="actions">
         <button class="btn-clear" onclick="limpiar()">Limpiar</button>
-        <button class="btn-send" id="btnSend" onclick="enviar()">Enviar</button>
+        <button class="btn-send" onclick="enviar()">Enviar</button>
       </div>
     </div>
 
   </div>
 </div>
 
+<!-- Loading -->
 <div class="loading" id="loading">
   <div class="loading-card">
     <div class="spinner"></div>
@@ -511,10 +361,8 @@ const tbody = document.getElementById("tbody");
 const statusEl = document.getElementById("status");
 const telInput = document.getElementById("telefono");
 const nomInput = document.getElementById("nombre");
-const btnSend = document.getElementById("btnSend");
 
 const bannerJornadaEl = document.getElementById("bannerJornada");
-const bannerStatusEl = document.getElementById("bannerStatus");
 
 const modal = document.getElementById("modal");
 const modalTitle = document.getElementById("modalTitle");
@@ -524,21 +372,10 @@ const modalActions = document.getElementById("modalActions");
 const loading = document.getElementById("loading");
 const loadingText = document.getElementById("loadingText");
 
-/* Admin UI */
-const adminPanel = document.getElementById("adminPanel");
-const btnAdminClose = document.getElementById("btnAdminClose");
-const btnAdminSave = document.getElementById("btnAdminSave");
-const btnAdminRefresh = document.getElementById("btnAdminRefresh");
-const swAllowNew = document.getElementById("swAllowNew");
-const swCloseEnabled = document.getElementById("swCloseEnabled");
-const closeAtInput = document.getElementById("closeAtInput");
-
 let JORNADA_TXT = "JORNADA";
 let JORNADA_NUM = null;
 
-let serverCfg = null;
-
-/* ===== Loading ===== */
+/* ===== Loading helpers ===== */
 function showLoading(text="Cargando…"){
   loadingText.textContent = text;
   loading.classList.add("show");
@@ -547,7 +384,7 @@ function hideLoading(){
   loading.classList.remove("show");
 }
 
-/* ===== Nombre: MAYÚSCULAS y sin acentos ===== */
+/* ========= Nombre: MAYÚSCULAS y sin acentos (cliente) ========= */
 function sanitizeNombreClient(v){
   return (v || "")
     .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
@@ -555,6 +392,8 @@ function sanitizeNombreClient(v){
     .trim()
     .toUpperCase();
 }
+
+// Mientras escribe:
 nomInput.addEventListener("input", () => {
   const pos = nomInput.selectionStart || 0;
   const before = nomInput.value;
@@ -566,12 +405,13 @@ nomInput.addEventListener("input", () => {
   savePersisted();
 });
 
-/* ===== Modal ===== */
+/* ===== Modal helpers ===== */
 function hideModal(){
   modal.classList.remove("show");
   modalActions.innerHTML = "";
   modalTitle.style.display = "";
 }
+
 function showAlert(msg){
   modalTitle.textContent = "";
   modalTitle.style.display = "none";
@@ -579,6 +419,7 @@ function showAlert(msg){
   modalActions.innerHTML = `<button class="btn-ghost" onclick="hideModal()">OK</button>`;
   modal.classList.add("show");
 }
+
 function showConfirm(msg){
   return new Promise(resolve=>{
     modalTitle.textContent = "";
@@ -596,16 +437,17 @@ function showConfirm(msg){
   });
 }
 
-/* ===== Logos ===== */
+/* LOGOS */
 function logo(team){
   let s=(team||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .toLowerCase().replace(/[^a-z0-9]/g,"");
   return "assets/"+s+".png";
 }
 
-/* ===== Persistencia ===== */
+/* PERSISTENCIA */
 const LS_TEL="qlm_tel";
 const LS_NOM="qlm_nom";
+
 function loadPersisted(){
   telInput.value = localStorage.getItem(LS_TEL) || "";
   nomInput.value = localStorage.getItem(LS_NOM) || "";
@@ -617,76 +459,9 @@ function savePersisted(){
 }
 telInput.addEventListener("input", savePersisted);
 
-/* Cache config para pintar rápido */
-const LS_CFG="qlm_cfg_cache_v2";
-function cacheWrite(cfg){
-  localStorage.setItem(LS_CFG, JSON.stringify({ cfg, ts: Date.now() }));
-}
-function cacheRead(){
-  try{
-    const obj = JSON.parse(localStorage.getItem(LS_CFG) || "null");
-    return obj?.cfg || null;
-  }catch(_){ return null; }
-}
+/* ✅ Cache de config para pintar rápido */
+const LS_CFG="qlm_cfg_cache_v1"; // { jornada, partidos, ts }
 
-/* ===== Registro abierto/cerrado ===== */
-function parseCloseAt(v){
-  if(!v) return null;
-  const s = String(v).trim();
-  if(!s) return null;
-
-  // Soporta "YYYY-MM-DD HH:MM"
-  const m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
-  if(m){
-    const iso = `${m[1]}T${m[2]}:00`;
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  // ISO
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function computeRegistroAbierto(cfg){
-  // Base: activo
-  const activo = String(cfg?.activo || "").toUpperCase();
-  if (activo && activo !== "SI") return { open:false, reason:"Registro cerrado" };
-
-  // Cierre automático (si viene del servidor)
-  const closeEnabled = String(cfg?.closeEnabled || "").toUpperCase() === "SI";
-  if (closeEnabled){
-    const closeAt = parseCloseAt(cfg?.closeAt);
-    if (closeAt){
-      const now = new Date();
-      if (now.getTime() >= closeAt.getTime()){
-        return { open:false, reason:"Registro cerrado" };
-      }
-      return { open:true, reason:"Abierto" };
-    }
-  }
-
-  return { open:true, reason:"Abierto" };
-}
-
-function applyRegistroUI(cfg){
-  const st = computeRegistroAbierto(cfg);
-  bannerStatusEl.textContent = st.open ? "Registro abierto" : "Registro cerrado";
-  btnSend.disabled = !st.open;
-
-  if (!st.open){
-    statusEl.textContent = "Registro cerrado.";
-    statusEl.className = "status error";
-  }else{
-    // no borres mensajes existentes si el usuario ya vio uno
-    if (statusEl.textContent === "Registro cerrado."){
-      statusEl.textContent = "";
-      statusEl.className = "status";
-    }
-  }
-}
-
-/* ===== Banner/jornada ===== */
 function setBanner(j){
   const n = Number(j);
   if (Number.isFinite(n) && n > 0){
@@ -700,7 +475,6 @@ function setBanner(j){
   }
 }
 
-/* ===== Render partidos ===== */
 function renderPartidos(partidos){
   tbody.innerHTML="";
   (partidos||[]).forEach((p,i)=>{
@@ -715,7 +489,7 @@ function renderPartidos(partidos){
   });
 }
 
-/* ===== WhatsApp ===== */
+/* MENSAJE WHATSAPP */
 function construirMensaje(nombre, partidos){
   let msg = "🏆 *QUINIELA LOS MISMOS*\n";
   msg += `📅 *${JORNADA_TXT}*\n`;
@@ -731,68 +505,18 @@ function construirMensaje(nombre, partidos){
   return msg.trim();
 }
 
-/* ===== Admin UI show/hide ===== */
-/* Abre admin con doble tap en el badge de status */
-let lastTap = 0;
-bannerStatusEl.addEventListener("click", ()=>{
-  const now = Date.now();
-  if (now - lastTap < 350){
-    adminPanel.classList.add("show");
-    // precarga values
-    if (serverCfg){
-      swAllowNew.checked = String(serverCfg.allowNew||"").toUpperCase() === "SI";
-      swCloseEnabled.checked = String(serverCfg.closeEnabled||"").toUpperCase() === "SI";
-      closeAtInput.value = serverCfg.closeAt || "";
-    }
-  }
-  lastTap = now;
-});
-btnAdminClose.addEventListener("click", ()=> adminPanel.classList.remove("show"));
-btnAdminRefresh.addEventListener("click", ()=> cargar(true));
-
-btnAdminSave.addEventListener("click", async ()=>{
-  try{
-    showLoading("Guardando ajustes…");
-    // Esto requiere implementación en Code.gs: action=adminSet
-    const payload = {
-      action: "adminSet",
-      allowNew: swAllowNew.checked ? "SI" : "NO",
-      closeEnabled: swCloseEnabled.checked ? "SI" : "NO",
-      closeAt: closeAtInput.value.trim()
-    };
-
-    const r = await fetch(SCRIPT_URL,{
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    });
-
-    const d = JSON.parse(await r.text());
-    if(!d.ok) throw new Error(d.message || "No se pudo guardar");
-
-    hideLoading();
-    adminPanel.classList.remove("show");
-    await cargar(true);
-    showAlert("Listo. Ajustes guardados.");
-  }catch(e){
-    hideLoading();
-    showAlert(String(e.message || e));
-  }
-});
-
-/* ===== CARGAR ===== */
-async function cargar(force=false){
+/* CARGAR */
+async function cargar(){
   loadPersisted();
 
-  if (!force){
-    const cached = cacheRead();
+  // pinta inmediato desde cache (si existe)
+  try{
+    const cached = JSON.parse(localStorage.getItem(LS_CFG) || "null");
     if (cached && Array.isArray(cached.partidos) && cached.partidos.length){
-      serverCfg = cached;
       setBanner(cached.jornada);
       renderPartidos(cached.partidos);
-      applyRegistroUI(cached);
     }
-  }
+  }catch(_){}
 
   showLoading("Cargando quiniela…");
   try{
@@ -800,19 +524,20 @@ async function cargar(force=false){
     const d = await r.json();
     if(!d.ok) throw new Error(d.message);
 
-    serverCfg = d;
-
     setBanner(d.jornada);
     renderPartidos(d.partidos || []);
-    applyRegistroUI(d);
 
-    cacheWrite(d);
+    localStorage.setItem(LS_CFG, JSON.stringify({
+      jornada: d.jornada || null,
+      partidos: d.partidos || [],
+      ts: Date.now()
+    }));
+
     hideLoading();
   }catch(e){
     hideLoading();
-    statusEl.textContent = e.message;
-    statusEl.className = "status error";
-    bannerStatusEl.textContent = "Error";
+    statusEl.textContent=e.message;
+    statusEl.className="status error";
   }
 }
 
@@ -820,19 +545,15 @@ async function cargar(force=false){
 function limpiar(){
   document.querySelectorAll("input[type=radio]").forEach(r=>r.checked=false);
   statusEl.textContent="";
-  statusEl.className="status";
 }
 
-/* Payload */
+/* Construir payload */
 function buildPayload(){
   const telefono = telInput.value.trim();
   const nombre = sanitizeNombreClient(nomInput.value);
 
   if(!telefono) throw new Error("Ingresa teléfono");
   if(!nombre) throw new Error("Ingresa nombre");
-
-  const st = computeRegistroAbierto(serverCfg || {});
-  if (!st.open) throw new Error("Registro cerrado.");
 
   const partidos=[];
   [...tbody.querySelectorAll("tr")].forEach((tr,i)=>{
@@ -856,6 +577,7 @@ async function enviar(){
 
     showLoading("Enviando quiniela…");
 
+    // 1) intento normal
     let r = await fetch(SCRIPT_URL,{
       method:"POST",
       headers:{ "Content-Type":"text/plain;charset=utf-8" },
@@ -864,6 +586,7 @@ async function enviar(){
 
     let d = JSON.parse(await r.text());
 
+    // 2) si es duplicado → modal SI/NO
     if(!d.ok && d.code === "DUPLICATE"){
       hideLoading();
       const ok = await showConfirm("Ya existe una quiniela con este nombre en esta jornada. ¿Quieres reemplazarla?");
@@ -886,14 +609,26 @@ async function enviar(){
       return;
     }
 
-    const mensaje = construirMensaje(payload.nombre, payload.partidos);
+    // arma mensaje usando los partidos del cupón (DOM)
+    const partidos = [...tbody.querySelectorAll("tr")].map((tr,i)=>{
+      const sel = tr.querySelector(`input[name="p${i+1}"]:checked`);
+      return {
+        local: tr.dataset.local,
+        visita: tr.dataset.visita,
+        pronostico: sel ? sel.value : ""
+      };
+    });
+
+    const mensaje = construirMensaje(payload.nombre, partidos);
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(mensaje)}`;
 
     statusEl.textContent="Quiniela registrada. Abriendo WhatsApp…";
     statusEl.className="status success";
 
+    /* LIMPIAR CUPÓN (solo selecciones) */
     document.querySelectorAll("input[type=radio]").forEach(r => r.checked = false);
 
+    // Quita el mensaje después de 1.5s (nombre/teléfono se quedan)
     setTimeout(() => {
       statusEl.textContent = "";
       statusEl.className = "status";
