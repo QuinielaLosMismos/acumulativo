@@ -548,7 +548,6 @@ function hideLoading(){
 }
 
 /* ===== Nombre: MAYÚSCULAS y sin acentos ===== */
-<script>
 function sanitizeNombreClient(v){
   // 1) sin acentos
   v = (v || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
@@ -562,24 +561,20 @@ function sanitizeNombreClient(v){
 }
 
 nomInput.addEventListener("input", () => {
-  const start = nomInput.selectionStart;
-  const end   = nomInput.selectionEnd;
-
   const before = nomInput.value;
-  const after  = sanitizeNombreClient(before);
+  const start = nomInput.selectionStart ?? before.length;
 
-  if (after !== before) {
+  const after = sanitizeNombreClient(before);
+
+  if (after !== before){
     nomInput.value = after;
-
-    // intenta conservar cursor lo mejor posible
     const delta = after.length - before.length;
-    const newPos = Math.max(0, (start || 0) + delta);
+    const newPos = Math.max(0, start + delta);
     nomInput.setSelectionRange(newPos, newPos);
   }
 
   savePersisted();
 });
-</script>
 
 /* ===== Modal ===== */
 function hideModal(){
