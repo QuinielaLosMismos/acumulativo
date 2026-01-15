@@ -548,6 +548,7 @@ function hideLoading(){
 }
 
 /* ===== Nombre: MAYÚSCULAS y sin acentos ===== */
+<script>
 function sanitizeNombreClient(v){
   // 1) sin acentos
   v = (v || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
