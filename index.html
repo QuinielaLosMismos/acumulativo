@@ -548,23 +548,38 @@ function hideLoading(){
 }
 
 /* ===== Nombre: MAYÚSCULAS y sin acentos ===== */
+<script>
 function sanitizeNombreClient(v){
-  return (v || "")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-    .replace(/\s+/g," ")
-    .trim()
-    .toUpperCase();
+  // 1) sin acentos
+  v = (v || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  // 2) mayúsculas
+  v = v.toUpperCase();
+  // 3) permite espacios, pero:
+  //    - quita espacios al inicio
+  //    - convierte múltiples espacios en uno
+  v = v.replace(/^\s+/, "").replace(/\s{2,}/g, " ");
+  return v;
 }
+
 nomInput.addEventListener("input", () => {
-  const pos = nomInput.selectionStart || 0;
+  const start = nomInput.selectionStart;
+  const end   = nomInput.selectionEnd;
+
   const before = nomInput.value;
-  const after = sanitizeNombreClient(before);
-  if (after !== before){
+  const after  = sanitizeNombreClient(before);
+
+  if (after !== before) {
     nomInput.value = after;
-    nomInput.setSelectionRange(pos, pos);
+
+    // intenta conservar cursor lo mejor posible
+    const delta = after.length - before.length;
+    const newPos = Math.max(0, (start || 0) + delta);
+    nomInput.setSelectionRange(newPos, newPos);
   }
+
   savePersisted();
 });
+</script>
 
 /* ===== Modal ===== */
 function hideModal(){
